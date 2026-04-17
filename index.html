@@ -1,0 +1,566 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>我的訂閱管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            primary: '#748CAB',
+                            dark: '#3E5C76',
+                            light: '#E6EBEF',
+                            bg: '#F2F5F8',
+                            card: '#FFFFFF',
+                            textMain: '#2C3E50',
+                            textSub: '#8796A5'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px rgba(62, 92, 118, 0.06)',
+                        'float': '0 -8px 32px rgba(62, 92, 118, 0.1)',
+                        'header': '0 4px 20px rgba(62, 92, 118, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #E2E8F0;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none; /* 防止 iOS 橡皮筋效應拉出白底 */
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #F2F5F8;
+        }
+
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+        .overlay {
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="text-brand-textMain antialiased selection:bg-brand-primary selection:text-white">
+
+    <!-- 終極解法：使用 100dvh (動態視口高度)，並拆分為 Flex-none (固定頭尾) 與 Flex-1 (捲動內容) -->
+    <div class="app-container h-[100dvh] flex flex-col relative overflow-hidden">
+        
+        <!-- ================= 1. 絕對置頂區域 (永遠不動) ================= -->
+        <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-2 z-20 flex flex-col transition-shadow duration-300">
+            <!-- 標題列 -->
+            <header class="flex justify-between items-center mb-5">
+                <h1 class="text-2xl font-bold tracking-wide text-brand-dark" id="pageTitle">我的訂閱</h1>
+                <button onclick="openModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0">
+                    <i class="fa-solid fa-plus text-lg"></i>
+                </button>
+            </header>
+
+            <!-- 首頁專屬：每月總花費 (修正3：確保它在固定區塊內，不會跟著滑動，且切換時隱藏) -->
+            <div id="homeHeaderContent" class="flex flex-col gap-5">
+                <section class="bg-brand-card rounded-[24px] p-6 shadow-soft relative shrink-0">
+                    <div class="flex items-center gap-2 mb-2 text-brand-textSub">
+                        <i class="fa-solid fa-wallet text-brand-primary"></i>
+                        <h2 class="text-sm font-medium">每月總花費 (TWD)</h2>
+                    </div>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span class="text-4xl font-bold tracking-tight text-brand-dark" id="totalAmount">$0</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-brand-bg flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub bg-brand-light/50 px-3 py-1 rounded-full" id="subCount">共 0 項訂閱</span>
+                    </div>
+                </section>
+
+                <!-- 修正2：「訂閱明細」被編入絕對置頂區塊的底部，絕對不會被滑掉或裁切 -->
+                <div class="flex justify-between items-end pb-1">
+                    <h3 class="text-lg font-bold text-brand-dark">訂閱明細</h3>
+                </div>
+            </div>
+            
+            <!-- 設定頁專屬：副標題 -->
+            <div id="settingsHeaderContent" class="hidden pb-2">
+                <p class="text-brand-textSub text-sm">自訂你的訂閱選項，這將會出現在新增訂閱的選單中。</p>
+            </div>
+        </div>
+
+        <!-- ================= 2. 內容滾動區域 ================= -->
+        <!-- 設定 onscroll 來動態加上 Header 陰影，解決問題 3 的「滑動視覺不舒服」 -->
+        <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth" onscroll="handleScroll()">
+            
+            <!-- 【首頁：訂閱列表】 -->
+            <div id="view-home" class="flex flex-col gap-4">
+                <div id="subList" class="flex flex-col gap-4"></div>
+
+                <!-- 空狀態 -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-5 text-brand-primary/40">
+                        <i class="fa-solid fa-box-open text-4xl"></i>
+                    </div>
+                    <p class="text-brand-dark font-bold text-lg mb-1">尚未建立任何訂閱</p>
+                    <p class="text-sm text-brand-textSub">點擊右上角「+」開始紀錄你的訂閱服務</p>
+                </div>
+            </div>
+
+            <!-- 【更多：設定頁面】 -->
+            <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
+                
+                <!-- 修正1 & 3: 重新設計設定卡片，確保 Input 不會把 Button 擠到換行 -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">分類管理</h4>
+                    </div>
+                    <ul id="settingsCategoryList" class="flex flex-col"></ul>
+                    
+                    <!-- 新增分類區：使用 min-w-0 與 shrink-0 防止破圖 -->
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newCategoryInput" placeholder="新增分類 (例如：📱 通訊費)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addCategory()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+
+                <!-- 圖示設定卡片 -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-icons text-brand-primary"></i>
+                            <h4 class="font-bold text-brand-dark">圖示庫管理</h4>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-white border-b border-brand-light/40">
+                        <p class="text-xs text-brand-textSub mb-4">請輸入 FontAwesome 的 Class 名稱</p>
+                        <!-- 修正1: 圖示方格排版，修復紅點位置 -->
+                        <div id="settingsIconList" class="flex flex-wrap gap-4"></div>
+                    </div>
+                    <!-- 新增圖示區 -->
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center">
+                        <input type="text" id="newIconInput" placeholder="fa-solid fa-star" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-mono text-brand-dark placeholder:text-brand-textSub/50 focus:border-brand-primary transition-colors">
+                        <button onclick="addIcon()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ================= 3. 底部導覽列 (絕對置底) ================= -->
+        <nav class="flex-none w-full bg-white/95 backdrop-blur-md border-t border-brand-light flex justify-around pt-3 pb-[env(safe-area-inset-bottom,20px)] px-2 z-30 text-[10px] text-brand-textSub">
+            <div onclick="switchTab('home')" id="tab-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-medium transition-colors">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span>總覽</span>
+            </div>
+            <div class="flex flex-col items-center gap-1.5 text-brand-light">
+                <i class="fa-solid fa-chart-pie text-xl"></i>
+                <span>統計</span>
+            </div>
+            <div onclick="switchTab('settings')" id="tab-settings" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
+                <i class="fa-solid fa-bars text-xl" id="tab-settings-icon"></i>
+                <span id="tab-settings-text">更多</span>
+            </div>
+        </nav>
+
+        <!-- ================= 4. 新增訂閱 Modal ================= -->
+        <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px]" onclick="closeModal()"></div>
+        
+        <!-- 修正4：重構 Modal 佈局，將按鈕固定在底部，並加入 pb-safe 安全邊距 -->
+        <div id="addModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[85dvh] max-w-[480px] mx-auto shadow-float">
+            
+            <!-- Modal Header (固定) -->
+            <div class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg">
+                <div class="w-12 h-1.5 bg-brand-light rounded-full mx-auto mb-4"></div>
+                <h3 class="text-xl font-bold text-center text-brand-dark">新增訂閱</h3>
+            </div>
+
+            <!-- Modal Body (捲動區) -->
+            <form id="addForm" onsubmit="handleAdd(event)" class="flex-1 overflow-y-auto px-6 py-6 hide-scrollbar flex flex-col gap-6 bg-white">
+                
+                <div class="relative">
+                    <label class="block text-sm font-medium text-brand-textSub mb-1.5">服務名稱</label>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light">
+                            <i id="currentIconDisplay" class="fa-brands fa-youtube"></i>
+                        </button>
+                        <input type="text" id="subName" required placeholder="例如：Netflix" 
+                               class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                    </div>
+
+                    <div id="iconDropdown" class="hidden absolute top-[85px] left-0 w-full bg-white border border-brand-light rounded-[16px] p-3 shadow-header z-20">
+                        <p class="text-xs text-brand-textSub mb-2 font-medium">選擇圖示：</p>
+                        <div class="grid grid-cols-6 gap-2 max-h-[150px] overflow-y-auto hide-scrollbar" id="iconDropdownGrid"></div>
+                    </div>
+                    <input type="hidden" id="subIcon" value="fa-brands fa-youtube">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">每月金額 (TWD)</label>
+                        <input type="number" id="subPrice" required min="0" placeholder="390" 
+                               class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款日期</label>
+                        <div class="flex items-center bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all">
+                            <span class="text-brand-textSub mr-2 whitespace-nowrap text-sm font-medium">每月</span>
+                            <input type="number" id="subDate" required min="1" max="31" placeholder="15" 
+                                   class="bg-transparent border-none outline-none w-full min-w-0 text-center font-bold text-lg p-0 text-brand-dark placeholder:text-brand-textSub/50">
+                            <span class="text-brand-textSub ml-2 whitespace-nowrap text-sm font-medium">日</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-brand-textSub mb-1.5">分類</label>
+                    <select id="subCategory" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-brand-textSub mb-1.5">訂閱管道</label>
+                    <select id="subChannel" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none">
+                        <option value="官方網站">官方網站</option>
+                        <option value="App Store">App Store (Apple)</option>
+                        <option value="Google Play">Google Play</option>
+                        <option value="第三方代購">第三方代購</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款管道 (選填)</label>
+                    <input type="text" id="subPayment" placeholder="例如：台新 @GoGo卡" 
+                           class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
+                </div>
+            </form>
+
+            <!-- Modal Footer (固定於底部) 修正4：完美避開 iOS Safe Area -->
+            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg">
+                <button type="button" onclick="document.getElementById('addForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
+                    確認新增
+                </button>
+            </div>
+        </div>
+
+        <!-- 自訂刪除確認彈窗 -->
+        <div id="deleteModal" class="overlay fixed inset-0 bg-brand-textMain/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm hidden">
+            <div class="bg-white rounded-[24px] p-6 w-full max-w-[320px] scale-95 opacity-0 transition-all shadow-float" id="deleteModalContent">
+                <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4 text-xl mx-auto">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="font-bold text-lg mb-2 text-center text-brand-dark">確定要刪除嗎？</h3>
+                <p class="text-brand-textSub text-sm mb-6 text-center">刪除後將無法恢復此訂閱紀錄。</p>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-[14px] bg-brand-bg text-brand-textMain font-bold hover:bg-brand-light transition-colors">取消</button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 rounded-[14px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-500/20">刪除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
+        let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
+        let categories = JSON.parse(localStorage.getItem('my_categories')) || defaultCategories;
+        let defaultIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping'];
+        let availableIcons = JSON.parse(localStorage.getItem('my_icons')) || defaultIcons;
+        let deleteTargetId = null;
+
+        const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(num);
+
+        // 解決問題 3：滾動時頂部區塊產生陰影，劃清界線
+        function handleScroll() {
+            const header = document.getElementById('fixedHeader');
+            const mainScroll = document.getElementById('mainScroll');
+            if (mainScroll.scrollTop > 10) {
+                header.classList.add('shadow-header');
+            } else {
+                header.classList.remove('shadow-header');
+            }
+        }
+
+        // 視圖切換
+        function switchTab(tab) {
+            const viewHome = document.getElementById('view-home');
+            const viewSettings = document.getElementById('view-settings');
+            const homeHeader = document.getElementById('homeHeaderContent');
+            const settingsHeader = document.getElementById('settingsHeaderContent');
+            const pageTitle = document.getElementById('pageTitle');
+            const mainScroll = document.getElementById('mainScroll');
+            
+            // 強制畫面回到最上方
+            mainScroll.scrollTop = 0;
+            handleScroll(); // 重置陰影
+            
+            document.getElementById('tab-home').classList.remove('text-brand-dark');
+            document.getElementById('tab-home').classList.add('text-brand-textSub');
+            document.getElementById('tab-settings-icon').classList.remove('text-brand-dark');
+            document.getElementById('tab-settings-text').classList.remove('text-brand-dark');
+
+            if (tab === 'home') {
+                viewHome.classList.remove('hidden');
+                viewSettings.classList.add('hidden');
+                homeHeader.classList.remove('hidden');
+                settingsHeader.classList.add('hidden');
+                pageTitle.innerText = "我的訂閱";
+                document.getElementById('tab-home').classList.add('text-brand-dark');
+                document.getElementById('tab-home').classList.remove('text-brand-textSub');
+                renderApp();
+            } else if (tab === 'settings') {
+                viewHome.classList.add('hidden');
+                viewSettings.classList.remove('hidden');
+                homeHeader.classList.add('hidden');
+                settingsHeader.classList.remove('hidden');
+                pageTitle.innerText = "設定與管理";
+                document.getElementById('tab-settings-icon').classList.add('text-brand-dark');
+                document.getElementById('tab-settings-text').classList.add('text-brand-dark');
+                renderSettings();
+            }
+        }
+
+        function toggleIconDropdown() {
+            const dropdown = document.getElementById('iconDropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                renderIconDropdown();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        function renderIconDropdown() {
+            const grid = document.getElementById('iconDropdownGrid');
+            grid.innerHTML = '';
+            availableIcons.forEach(iconClass => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg";
+                btn.innerHTML = `<i class="${iconClass}"></i>`;
+                btn.onclick = () => {
+                    document.getElementById('currentIconDisplay').className = iconClass;
+                    document.getElementById('subIcon').value = iconClass;
+                    document.getElementById('iconDropdown').classList.add('hidden');
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        function renderSettings() {
+            const catList = document.getElementById('settingsCategoryList');
+            catList.innerHTML = '';
+            categories.forEach((cat, index) => {
+                catList.innerHTML += `
+                    <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
+                        <span class="text-brand-textMain font-bold text-[15px]">${cat}</span>
+                        <button onclick="removeCategory(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    </li>
+                `;
+            });
+
+            // 修正1：解決圖示設定卡片破版，改成 Flex Wrap 且紅點定位正確
+            const iconList = document.getElementById('settingsIconList');
+            iconList.innerHTML = '';
+            availableIcons.forEach((iconClass, index) => {
+                iconList.innerHTML += `
+                    <div class="relative w-12 h-12 bg-brand-bg rounded-[14px] flex items-center justify-center text-brand-dark text-xl shrink-0">
+                        <i class="${iconClass}"></i>
+                        <button onclick="removeIcon(${index})" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 shadow-md text-white rounded-full text-[10px] flex items-center justify-center transition-transform hover:scale-110 active:scale-95"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const val = input.value.trim();
+            if (val && !categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('my_categories', JSON.stringify(categories));
+                input.value = '';
+                renderSettings();
+                renderCategorySelect();
+            }
+        }
+
+        function removeCategory(index) {
+            if (categories.length <= 1) return alert('至少需保留一個分類');
+            categories.splice(index, 1);
+            localStorage.setItem('my_categories', JSON.stringify(categories));
+            renderSettings();
+            renderCategorySelect();
+        }
+
+        function addIcon() {
+            const input = document.getElementById('newIconInput');
+            const val = input.value.trim();
+            if (val && !availableIcons.includes(val)) {
+                availableIcons.push(val);
+                localStorage.setItem('my_icons', JSON.stringify(availableIcons));
+                input.value = '';
+                renderSettings();
+            }
+        }
+
+        function removeIcon(index) {
+            if (availableIcons.length <= 1) return alert('至少需保留一個圖示');
+            availableIcons.splice(index, 1);
+            localStorage.setItem('my_icons', JSON.stringify(availableIcons));
+            renderSettings();
+        }
+
+        function renderCategorySelect() {
+            const select = document.getElementById('subCategory');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.innerText = cat;
+                select.appendChild(option);
+            });
+        }
+
+        function renderApp() {
+            const listEl = document.getElementById('subList');
+            const emptyEl = document.getElementById('emptyState');
+            const totalEl = document.getElementById('totalAmount');
+            const countEl = document.getElementById('subCount');
+
+            const total = subscriptions.reduce((sum, sub) => sum + Number(sub.price), 0);
+            totalEl.innerText = formatMoney(total);
+            countEl.innerText = `${subscriptions.length} 項訂閱`;
+
+            localStorage.setItem('my_subscriptions', JSON.stringify(subscriptions));
+            renderCategorySelect();
+            listEl.innerHTML = '';
+
+            if (subscriptions.length === 0) {
+                emptyEl.style.display = 'flex';
+            } else {
+                emptyEl.style.display = 'none';
+                subscriptions.sort((a, b) => a.date - b.date).forEach(sub => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-[24px] p-5 shadow-soft flex flex-col gap-3 transition-transform";
+                    const paymentText = sub.payment ? sub.payment : '未設定扣款方式';
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-[50px] h-[50px] rounded-[16px] bg-brand-bg text-brand-primary flex items-center justify-center text-2xl shrink-0">
+                                    <i class="${sub.icon}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-brand-dark text-base">${sub.name}</h4>
+                                    <p class="text-xs text-brand-textSub mt-0.5 font-medium">每月 ${sub.date} 日扣款</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-bold text-lg text-brand-dark">${formatMoney(sub.price)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-2 mt-2 pt-3 border-t border-brand-bg">
+                            <span class="text-[11px] bg-brand-bg text-brand-textMain font-bold px-2.5 py-1.5 rounded-[8px]">${sub.category}</span>
+                            <span class="text-[11px] bg-brand-bg text-brand-textMain font-bold px-2.5 py-1.5 rounded-[8px]"><i class="fa-solid fa-store mr-1 text-brand-textSub"></i>${sub.channel}</span>
+                            <button onclick="openDeleteModal('${sub.id}')" class="ml-auto w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-red-500 transition-colors bg-brand-bg hover:bg-red-50 rounded-full"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                        </div>
+                        ${sub.payment ? `<p class="text-[11px] text-brand-textSub font-medium mt-1"><i class="fa-regular fa-credit-card mr-1"></i>${sub.payment}</p>` : ''}
+                    `;
+                    listEl.appendChild(card);
+                });
+            }
+        }
+
+        function handleAdd(e) {
+            e.preventDefault();
+            const name = document.getElementById('subName').value;
+            const price = document.getElementById('subPrice').value;
+            const date = document.getElementById('subDate').value;
+            const category = document.getElementById('subCategory').value;
+            const channel = document.getElementById('subChannel').value;
+            const payment = document.getElementById('subPayment').value;
+            const icon = document.getElementById('subIcon').value;
+
+            if (name && price && date) {
+                const newSub = {
+                    id: Date.now().toString(), name: name, price: Number(price), date: Number(date),
+                    category: category, channel: channel, payment: payment, icon: icon
+                };
+                subscriptions.push(newSub);
+                renderApp();
+                closeModal();
+                
+                e.target.reset(); 
+                document.getElementById('currentIconDisplay').className = availableIcons[0];
+                document.getElementById('subIcon').value = availableIcons[0];
+                if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
+            }
+        }
+
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteModalContent = document.getElementById('deleteModalContent');
+
+        function openDeleteModal(id) {
+            deleteTargetId = id;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => { deleteModalContent.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeDeleteModal() {
+            deleteModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { deleteModal.classList.add('hidden'); deleteTargetId = null; }, 200);
+        }
+
+        function confirmDelete() {
+            if(deleteTargetId) {
+                subscriptions = subscriptions.filter(sub => sub.id !== deleteTargetId);
+                renderApp();
+                closeDeleteModal();
+            }
+        }
+
+        const modal = document.getElementById('addModal');
+        const overlay = document.getElementById('modalOverlay');
+
+        function openModal() {
+            modal.classList.add('active');
+            overlay.classList.add('active');
+            const currentIcon = document.getElementById('subIcon').value;
+            document.getElementById('currentIconDisplay').className = currentIcon;
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
+            document.getElementById('iconDropdown').classList.add('hidden');
+        }
+
+        document.getElementById('addForm').addEventListener('click', (e) => {
+            if (!e.target.closest('#iconDropdown') && !e.target.closest('button[onclick="toggleIconDropdown()"]')) {
+                document.getElementById('iconDropdown').classList.add('hidden');
+            }
+        });
+
+        // 初始化
+        renderApp();
+    </script>
+</body>
+</html>
+
+
+```
