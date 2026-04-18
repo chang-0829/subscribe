@@ -49,7 +49,6 @@
 
         .bottom-sheet {
             transform: translateY(100%);
-            /* 調整貝茲曲線，讓彈回或關閉的動畫更像彈簧 */
             transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
         }
         .bottom-sheet.active { transform: translateY(0); }
@@ -183,8 +182,8 @@
                 <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark relative pointer-events-none">新增訂閱</h3>
             </div>
             
-            <div class="flex-1 overflow-y-auto hide-scrollbar">
-                <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-6 bg-white">
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-6">
                     <input type="hidden" id="editId" value="">
                     
                     <div class="relative">
@@ -260,6 +259,7 @@
                 </form>
             </div>
             
+            <!-- 表單 Modal 固定底部按鈕 -->
             <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg">
                 <button type="button" onclick="document.getElementById('saveForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
                     確認儲存
@@ -267,57 +267,62 @@
             </div>
         </div>
 
-        <!-- ================= 5. 訂閱詳細資訊 Modal ================= -->
-        <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-brand-bg rounded-t-[32px] flex flex-col max-h-[85dvh] max-w-[480px] mx-auto shadow-float">
+        <!-- ================= 5. 訂閱詳細資訊 Modal (結構完全對標新增表單) ================= -->
+        <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
             
-            <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] relative cursor-grab active:cursor-grabbing touch-none">
+            <!-- 詳細資訊 Header (與新增表單一模一樣) -->
+            <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
                 <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
-                <button onclick="closeAllModals()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
-                    <i class="fa-solid fa-chevron-down text-xl"></i>
+                <button onclick="closeAllModals()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">訂閱詳細資訊</h3>
             </div>
             
-            <div class="flex-1 overflow-y-auto px-6 py-8 hide-scrollbar bg-white rounded-b-[32px] flex flex-col pb-[env(safe-area-inset-bottom,32px)]">
-                <div class="flex flex-col items-center mb-8">
-                    <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
-                        <i id="detailIcon" class=""></i>
+            <!-- 詳細資訊 內容捲動區 (背景為白) -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                <div class="px-6 py-6 flex flex-col">
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
+                            <i id="detailIcon" class=""></i>
+                        </div>
+                        <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
+                        <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
+                        <span id="detailCycleBadge" class="mt-2 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
                     </div>
-                    <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
-                    <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
-                    <span id="detailCycleBadge" class="mt-2 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
-                </div>
 
-                <div class="bg-brand-bg rounded-[20px] p-5 flex flex-col gap-4 mb-8 border border-brand-light/30">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">扣款日期</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="detailDate"></span>
-                    </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">分類</span>
-                        <span class="text-[15px] font-bold text-brand-dark bg-white px-2 py-0.5 rounded-md" id="detailCategory"></span>
-                    </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">訂閱管道</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="detailChannel"></span>
-                    </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">扣款方式</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="detailPayment"></span>
+                    <div class="bg-brand-bg rounded-[20px] p-5 flex flex-col gap-4 border border-brand-light/30">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">扣款日期</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailDate"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">分類</span>
+                            <span class="text-[15px] font-bold text-brand-dark bg-white px-2 py-0.5 rounded-md" id="detailCategory"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">訂閱管道</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailChannel"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">扣款方式</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailPayment"></span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-auto flex gap-3">
-                    <button onclick="triggerDeleteFromDetail()" class="w-14 shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <button onclick="openEditForm()" class="flex-1 bg-brand-bg text-brand-dark border border-brand-light rounded-[16px] py-4 font-bold text-lg hover:bg-brand-dark hover:text-white transition-all shadow-sm">
-                        <i class="fa-solid fa-pen mr-2"></i>編輯此訂閱
-                    </button>
-                </div>
+            <!-- 詳細資訊 固定底部按鈕 (與新增表單位置對齊) -->
+            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3">
+                <button onclick="triggerDeleteFromDetail()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button onclick="openEditForm()" class="flex-1 bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
+                    <i class="fa-solid fa-pen mr-2"></i>編輯此訂閱
+                </button>
             </div>
         </div>
 
@@ -746,7 +751,6 @@
             }
         });
 
-        // ====== 專業級 60fps 絲滑拖曳引擎 ======
         function setupSmoothDragToClose(modalElement, headerElement) {
             let startY = 0;
             let currentY = 0;
@@ -762,7 +766,6 @@
                 lastTime = Date.now();
                 isDragging = true;
                 
-                // 1. 取消 CSS 動畫交由 JS 接管，並開啟硬體加速 (GPU) 消除起步延遲
                 modalElement.style.transition = 'none'; 
                 modalElement.style.willChange = 'transform';
                 
@@ -774,7 +777,6 @@
                 currentY = e.touches[0].clientY;
                 const deltaY = currentY - startY;
                 
-                // 2. 計算滑動瞬間的「速度 (Velocity)」
                 const now = Date.now();
                 const timeDelta = now - lastTime;
                 if (timeDelta > 0) {
@@ -784,7 +786,6 @@
                 lastTime = now;
                 
                 if (deltaY > 0) {
-                    // 3. 使用 requestAnimationFrame 同步螢幕刷新率 (防止掉幀卡頓)
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
                     animationFrameId = requestAnimationFrame(() => {
                         modalElement.style.transform = `translateY(${deltaY}px)`;
@@ -800,17 +801,14 @@
                 
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 
-                // 恢復彈性動畫與關閉硬體加速
                 modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)';
                 modalElement.style.willChange = 'auto';
 
                 const deltaY = currentY - startY;
                 
-                // 4. 判斷邏輯升級：拉動超過 100px，或「快速往下輕滑 (Flick, 速度 > 0.6)」都會關閉
                 if (deltaY > 100 || velocity > 0.6) {
                     closeAllModals();
                 } else {
-                    // 沒達標則優雅彈回
                     modalElement.style.transform = '';
                 }
                 velocity = 0;
