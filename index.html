@@ -252,7 +252,6 @@
                     <div class="relative">
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">服務名稱</label>
                         <div class="flex gap-3 relative z-10">
-                            <!-- 修改：將 i 標籤改為 div，以便由 JS 注入 img 或 i -->
                             <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light relative overflow-hidden">
                                 <div id="currentIconDisplay" class="flex items-center justify-center w-full h-full"></div>
                             </button>
@@ -264,7 +263,7 @@
                             <p class="text-xs text-brand-textSub mb-2 font-medium">選擇圖示：</p>
                             <div class="grid grid-cols-6 gap-2 max-h-[150px] overflow-y-auto hide-scrollbar" id="iconDropdownGrid"></div>
                         </div>
-                        <input type="hidden" id="subIcon" value="netflix.svg">
+                        <input type="hidden" id="subIcon" value="assets/icons/netflix.svg">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
@@ -346,7 +345,6 @@
                 <div class="px-6 py-6 flex flex-col">
                     <div class="flex flex-col items-center mb-8 relative">
                         <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50 overflow-hidden relative">
-                            <!-- 修改：改為 div 容器 -->
                             <div id="detailIconDisplay" class="flex items-center justify-center w-full h-full"></div>
                         </div>
                         <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
@@ -406,6 +404,7 @@
     </div>
 
     <script>
+        // ======= 資料初始化 =======
         let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
         
         let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
@@ -419,13 +418,11 @@
 
         let rates = JSON.parse(localStorage.getItem('my_rates')) || { JPY: 0.21 };
 
-        // ==========================================
-        // 核心更新：將你的 SVG 加入支援清單
-        // ==========================================
+        // 修正：加入了 assets/icons/ 路徑
         const availableIcons = [
-            'netflix.svg', 
-            'line.svg', 
-            'icloud.svg', 
+            'assets/icons/netflix.svg', 
+            'assets/icons/line.svg', 
+            'assets/icons/icloud.svg', 
             'fa-brands fa-youtube', 
             'fa-brands fa-spotify', 
             'fa-brands fa-apple', 
@@ -450,21 +447,20 @@
             }).format(num);
         };
 
-        // ==========================================
-        // 核心更新：自動判斷 SVG 或 FontAwesome 的引擎
-        // ==========================================
+        // 自動判斷 SVG 渲染器
         function getIconHTML(iconVal, sizeStr = 'normal') {
-            if (!iconVal) iconVal = 'fa-solid fa-box-open'; // 防呆
+            if (!iconVal) iconVal = 'fa-solid fa-box-open'; 
             
-            // 如果字串包含 .svg，就渲染成 img 圖片標籤
+            // 防呆：如果之前的資料只存了 .svg (沒加路徑)，自動幫它補上 assets/icons/
+            if (iconVal.includes('.svg') && !iconVal.includes('/')) {
+                iconVal = 'assets/icons/' + iconVal;
+            }
+
             if (iconVal.includes('.svg')) {
-                // 根據不同的顯示區域，給予對應的寬高限制，確保不會破版
                 let sizeClass = 'w-6 h-6'; 
-                if (sizeStr === 'large') sizeClass = 'w-10 h-10'; // 細節大圖
-                
+                if (sizeStr === 'large') sizeClass = 'w-10 h-10'; 
                 return `<img src="${iconVal}" class="${sizeClass} object-contain" alt="icon" style="pointer-events: none;">`;
             } 
-            // 否則就渲染成傳統的 FontAwesome i 標籤
             else {
                 return `<i class="${iconVal}"></i>`;
             }
@@ -575,7 +571,6 @@
                 btn.type = 'button';
                 btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg relative";
                 
-                // 套用自動判斷渲染器
                 btn.innerHTML = getIconHTML(iconVal, 'normal');
                 
                 btn.onclick = () => {
@@ -733,7 +728,6 @@
                     item.innerHTML = `
                         <div class="flex flex-1 items-center gap-3">
                             <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
-                                <!-- 套用自動渲染器 -->
                                 ${getIconHTML(sub.icon, 'normal')}
                             </div>
                             <div class="flex flex-col">
@@ -911,7 +905,7 @@
                 document.getElementById('editId').value = '';
                 document.getElementById('formModalTitle').innerText = '新增訂閱';
                 
-                const currentIcon = availableIcons[0]; // 現在會是 netflix.svg
+                const currentIcon = availableIcons[0]; 
                 document.getElementById('currentIconDisplay').innerHTML = getIconHTML(currentIcon, 'normal');
                 document.getElementById('subIcon').value = currentIcon;
                 
@@ -942,7 +936,6 @@
             document.getElementById('subPayment').value = sub.payment || '';
             document.getElementById('subIcon').value = sub.icon;
             
-            // 套用自動渲染器
             document.getElementById('currentIconDisplay').innerHTML = getIconHTML(sub.icon, 'normal');
             
             document.getElementById('subCycle').value = sub.cycle || 'monthly';
@@ -965,9 +958,7 @@
 
             currentDetailId = id;
             
-            // 套用自動渲染器 (大尺寸)
             document.getElementById('detailIconDisplay').innerHTML = getIconHTML(sub.icon, 'large');
-            
             document.getElementById('detailName').innerText = sub.name;
             
             const currency = sub.currency || 'TWD';
