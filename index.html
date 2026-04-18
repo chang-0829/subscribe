@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>我的訂閱管理</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 引入 Chart.js 圖表套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         tailwind.config = {
@@ -70,12 +75,12 @@
         <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-2 z-20 flex flex-col border-b border-transparent">
             <header class="flex justify-between items-center mb-5">
                 <h1 class="text-2xl font-bold tracking-wide text-brand-dark" id="pageTitle">我的訂閱</h1>
-                <!-- 給新增按鈕加上 ID 以便在設定頁隱藏 -->
                 <button id="headerAddBtn" onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0">
                     <i class="fa-solid fa-plus text-lg"></i>
                 </button>
             </header>
 
+            <!-- 首頁專屬 Header -->
             <div id="homeHeaderContent" class="flex flex-col gap-5">
                 <section class="bg-brand-card rounded-[24px] p-6 shadow-soft relative shrink-0">
                     <div class="flex items-center gap-2 mb-2 text-brand-textSub">
@@ -89,12 +94,17 @@
                         <span class="text-sm font-medium text-brand-textSub bg-brand-light/50 px-3 py-1 rounded-full" id="subCount">共 0 項訂閱</span>
                     </div>
                 </section>
-
                 <div class="flex justify-between items-end pb-1 bg-brand-bg">
                     <h3 class="text-lg font-bold text-brand-dark">訂閱明細</h3>
                 </div>
             </div>
             
+            <!-- 統計頁專屬 Header -->
+            <div id="statsHeaderContent" class="hidden pb-2">
+                <p class="text-brand-textSub text-sm">各項分類的花費佔比與年度預估統計。</p>
+            </div>
+
+            <!-- 設定頁專屬 Header -->
             <div id="settingsHeaderContent" class="hidden pb-2">
                 <p class="text-brand-textSub text-sm">自訂你的下拉選單選項，這將會出現在新增訂閱時供你選擇。</p>
             </div>
@@ -103,6 +113,7 @@
         <!-- ================= 2. 內容滾動區域 ================= -->
         <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth">
             
+            <!-- 【首頁：訂閱列表】 -->
             <div id="view-home" class="flex flex-col gap-4">
                 <div id="subListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden hidden mb-6">
                     <div id="subList" class="flex flex-col"></div>
@@ -117,15 +128,53 @@
                 </div>
             </div>
 
+            <!-- 【統計頁面：圓餅圖與年消費】 -->
+            <div id="view-stats" class="hidden flex flex-col gap-6 pb-10 pt-2">
+                
+                <!-- 年消費總計卡片 -->
+                <div class="bg-gradient-to-br from-brand-dark to-brand-primary rounded-[24px] shadow-soft p-6 flex flex-col relative overflow-hidden text-white">
+                    <!-- 背景裝飾 -->
+                    <i class="fa-solid fa-chart-line absolute -right-6 -bottom-6 text-8xl opacity-10"></i>
+                    
+                    <div class="flex items-center gap-2 mb-2 text-white/80 z-10">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <h2 class="text-sm font-medium">預估年總花費 (TWD)</h2>
+                    </div>
+                    <div class="flex items-baseline gap-1 mt-1 z-10">
+                        <span class="text-4xl font-bold tracking-tight" id="statsAnnualTotal">$0</span>
+                    </div>
+                    <p class="text-xs text-white/70 mt-4 z-10">基於目前的月付與年付項目進行推算</p>
+                </div>
+
+                <!-- 圓餅圖與分類統計清單 -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">各分類佔比 (每月)</h4>
+                    </div>
+                    <div class="p-5">
+                        <!-- Chart.js 畫布 -->
+                        <div class="relative h-[220px] w-full flex justify-center mb-6">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        
+                        <!-- 分類統計條列清單 -->
+                        <div id="statsCategoryList" class="flex flex-col gap-0 border-t border-brand-light/40 pt-2">
+                            <!-- 由 JS 動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 【更多：設定頁面】 -->
             <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
-                <!-- 自訂分類管理 -->
+                <!-- 自訂分類 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-layer-group text-brand-primary"></i>
                         <h4 class="font-bold text-brand-dark">分類管理</h4>
                     </div>
                     <ul id="settingsCategoryList" class="flex flex-col"></ul>
-                    
                     <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
                         <input type="text" id="newCategoryInput" placeholder="新增分類 (例如：📱 通訊費)" 
                                class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
@@ -133,14 +182,27 @@
                     </div>
                 </div>
 
-                <!-- 自訂付款方式管理 (取代原本的 Icon 管理) -->
+                <!-- 自訂訂閱管道 (新增功能 1) -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-store text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">訂閱管道管理</h4>
+                    </div>
+                    <ul id="settingsChannelList" class="flex flex-col"></ul>
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newChannelInput" placeholder="新增管道 (例如：電信代收)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addChannel()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+
+                <!-- 自訂付款方式 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-regular fa-credit-card text-brand-primary"></i>
                         <h4 class="font-bold text-brand-dark">付款方式管理</h4>
                     </div>
                     <ul id="settingsPaymentList" class="flex flex-col"></ul>
-                    
                     <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
                         <input type="text" id="newPaymentInput" placeholder="新增付款方式 (例如：Apple Pay)" 
                                class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
@@ -153,16 +215,16 @@
 
         <!-- ================= 3. 底部導覽列 ================= -->
         <nav class="flex-none w-full bg-white/95 backdrop-blur-md border-t border-brand-light flex justify-around pt-3 pb-[env(safe-area-inset-bottom,20px)] px-2 z-30 text-[10px] text-brand-textSub">
-            <div onclick="switchTab('home')" id="tab-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-medium transition-colors">
-                <i class="fa-solid fa-house text-xl"></i>
-                <span>總覽</span>
+            <div onclick="switchTab('home')" id="tab-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-bold transition-colors">
+                <i class="fa-solid fa-house text-xl mb-0.5" id="tab-home-icon"></i>
+                <span id="tab-home-text">總覽</span>
             </div>
-            <div class="flex flex-col items-center gap-1.5 text-brand-light">
-                <i class="fa-solid fa-chart-pie text-xl"></i>
-                <span>統計</span>
+            <div onclick="switchTab('stats')" id="tab-stats" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
+                <i class="fa-solid fa-chart-pie text-xl mb-0.5" id="tab-stats-icon"></i>
+                <span id="tab-stats-text">統計</span>
             </div>
             <div onclick="switchTab('settings')" id="tab-settings" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-bars text-xl" id="tab-settings-icon"></i>
+                <i class="fa-solid fa-bars text-xl mb-0.5" id="tab-settings-icon"></i>
                 <span id="tab-settings-text">更多</span>
             </div>
         </nav>
@@ -241,17 +303,13 @@
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">分類</label>
                         <select id="subCategory" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
                     </div>
+                    
+                    <!-- 訂閱管道改為動態渲染 -->
                     <div>
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">訂閱管道</label>
-                        <select id="subChannel" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none">
-                            <option value="官方網站">官方網站</option>
-                            <option value="App Store">App Store (Apple)</option>
-                            <option value="Google Play">Google Play</option>
-                            <option value="第三方代購">第三方代購</option>
-                        </select>
+                        <select id="subChannel" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
                     </div>
                     
-                    <!-- 修正5：付款方式改為下拉選單 -->
                     <div>
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款方式 (選填)</label>
                         <select id="subPayment" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
@@ -267,7 +325,6 @@
         </div>
 
         <!-- ================= 5. 訂閱詳細資訊 Modal ================= -->
-        <!-- 修正1：外框加入 overflow-hidden 確保不跑版 -->
         <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
             
             <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
@@ -278,7 +335,6 @@
                 <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">訂閱詳細資訊</h3>
             </div>
             
-            <!-- 修正1：內容區加入 id="detailModalScroll"，並設為 overflow-y-auto 與 hide-scrollbar -->
             <div id="detailModalScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-white">
                 <div class="px-6 py-6 flex flex-col">
                     <div class="flex flex-col items-center mb-8">
@@ -314,7 +370,6 @@
                 </div>
             </div>
 
-            <!-- 固定底部按鈕 -->
             <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3">
                 <button onclick="triggerDeleteFromDetail()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
                     <i class="fa-solid fa-trash-can"></i>
@@ -325,6 +380,7 @@
             </div>
         </div>
 
+        <!-- 刪除確認 Modal -->
         <div id="deleteModal" class="overlay fixed inset-0 bg-brand-textMain/60 z-[60] flex items-center justify-center p-4 backdrop-blur-[2px] hidden">
             <div class="bg-white rounded-[24px] p-6 w-full max-w-[320px] scale-95 opacity-0 transition-all shadow-float" id="deleteModalContent">
                 <div class="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4 text-2xl mx-auto">
@@ -341,61 +397,89 @@
     </div>
 
     <script>
+        // ======= 資料初始化 =======
         let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
         
         let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
         let categories = JSON.parse(localStorage.getItem('my_categories')) || defaultCategories;
         
-        // 修正5：預設付款方式清單
+        let defaultChannels = ['官方網站', 'App Store (Apple)', 'Google Play', '第三方代購'];
+        let channels = JSON.parse(localStorage.getItem('my_channels')) || defaultChannels;
+
         let defaultPayments = ['台新 @GoGo卡', '國泰 CUBE 卡', '富邦 J卡', 'Apple Pay'];
         let payments = JSON.parse(localStorage.getItem('my_payments')) || defaultPayments;
 
-        // 移除設定頁面自訂圖示功能，使用固定清單供表單選擇
         const availableIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping', 'fa-solid fa-pen-nib', 'fa-brands fa-figma', 'fa-brands fa-discord'];
         
         let currentDetailId = null;
+        let chartInstance = null; // 紀錄圓餅圖實例
 
         const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(num);
 
+        // ======= 導覽列與視圖切換 =======
         function switchTab(tab) {
             const viewHome = document.getElementById('view-home');
+            const viewStats = document.getElementById('view-stats');
             const viewSettings = document.getElementById('view-settings');
+            
             const homeHeader = document.getElementById('homeHeaderContent');
+            const statsHeader = document.getElementById('statsHeaderContent');
             const settingsHeader = document.getElementById('settingsHeaderContent');
+            
             const pageTitle = document.getElementById('pageTitle');
             const mainScroll = document.getElementById('mainScroll');
-            const headerAddBtn = document.getElementById('headerAddBtn'); // 修正3
+            const headerAddBtn = document.getElementById('headerAddBtn');
             
             mainScroll.scrollTop = 0;
             
-            document.getElementById('tab-home').classList.remove('text-brand-dark');
-            document.getElementById('tab-home').classList.add('text-brand-textSub');
-            document.getElementById('tab-settings-icon').classList.remove('text-brand-dark');
-            document.getElementById('tab-settings-text').classList.remove('text-brand-dark');
+            // 重置導覽列樣式 (灰色與一般字重)
+            ['home', 'stats', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('text-brand-dark', 'font-bold');
+                document.getElementById(`tab-${t}`).classList.add('text-brand-textSub');
+                document.getElementById(`tab-${t}-icon`).classList.remove('text-brand-dark');
+                document.getElementById(`tab-${t}-text`).classList.remove('text-brand-dark');
+            });
+
+            // 設定目標標籤為活躍狀態 (深色與粗體)
+            document.getElementById(`tab-${tab}`).classList.add('text-brand-dark', 'font-bold');
+            document.getElementById(`tab-${tab}`).classList.remove('text-brand-textSub');
+            document.getElementById(`tab-${tab}-icon`).classList.add('text-brand-dark');
+            document.getElementById(`tab-${tab}-text`).classList.add('text-brand-dark');
 
             if (tab === 'home') {
                 viewHome.classList.remove('hidden');
+                viewStats.classList.add('hidden');
                 viewSettings.classList.add('hidden');
                 homeHeader.classList.remove('hidden');
+                statsHeader.classList.add('hidden');
                 settingsHeader.classList.add('hidden');
-                headerAddBtn.classList.remove('hidden'); // 首頁顯示 + 號
+                headerAddBtn.classList.remove('hidden'); 
                 pageTitle.innerText = "我的訂閱";
-                document.getElementById('tab-home').classList.add('text-brand-dark');
-                document.getElementById('tab-home').classList.remove('text-brand-textSub');
                 renderApp();
+            } else if (tab === 'stats') {
+                viewHome.classList.add('hidden');
+                viewStats.classList.remove('hidden');
+                viewSettings.classList.add('hidden');
+                homeHeader.classList.add('hidden');
+                statsHeader.classList.remove('hidden');
+                settingsHeader.classList.add('hidden');
+                headerAddBtn.classList.add('hidden'); // 隱藏+號
+                pageTitle.innerText = "統計分析";
+                renderStats(); // 繪製圖表
             } else if (tab === 'settings') {
                 viewHome.classList.add('hidden');
+                viewStats.classList.add('hidden');
                 viewSettings.classList.remove('hidden');
                 homeHeader.classList.add('hidden');
+                statsHeader.classList.add('hidden');
                 settingsHeader.classList.remove('hidden');
-                headerAddBtn.classList.add('hidden'); // 修正3：設定頁隱藏 + 號
+                headerAddBtn.classList.add('hidden'); // 隱藏+號
                 pageTitle.innerText = "設定與管理";
-                document.getElementById('tab-settings-icon').classList.add('text-brand-dark');
-                document.getElementById('tab-settings-text').classList.add('text-brand-dark');
                 renderSettings();
             }
         }
 
+        // ======= 日期輸入切換 =======
         function toggleDateInput() {
             const cycle = document.getElementById('subCycle').value;
             const monthlyGroup = document.getElementById('monthlyDateGroup');
@@ -409,7 +493,6 @@
                 monthlyGroup.classList.remove('flex');
                 yearlyGroup.classList.add('flex');
                 yearlyGroup.classList.remove('hidden');
-                
                 subDateDay.removeAttribute('required');
                 subDateMonthYearly.setAttribute('required', 'required');
                 subDateDayYearly.setAttribute('required', 'required');
@@ -418,7 +501,6 @@
                 yearlyGroup.classList.remove('flex');
                 monthlyGroup.classList.add('flex');
                 monthlyGroup.classList.remove('hidden');
-
                 subDateMonthYearly.removeAttribute('required');
                 subDateDayYearly.removeAttribute('required');
                 subDateDay.setAttribute('required', 'required');
@@ -452,30 +534,24 @@
             });
         }
 
+        // ======= 設定頁面渲染與資料操作 =======
         function renderSettings() {
-            // 渲染分類
-            const catList = document.getElementById('settingsCategoryList');
-            catList.innerHTML = '';
-            categories.forEach((cat, index) => {
-                catList.innerHTML += `
-                    <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
-                        <span class="text-brand-textMain font-bold text-[15px]">${cat}</span>
-                        <button onclick="removeCategory(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-                    </li>
-                `;
-            });
+            const createListHTML = (items, removeFuncStr) => {
+                let html = '';
+                items.forEach((item, index) => {
+                    html += `
+                        <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
+                            <span class="text-brand-textMain font-bold text-[15px]">${item}</span>
+                            <button onclick="${removeFuncStr}(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        </li>
+                    `;
+                });
+                return html;
+            };
 
-            // 修正5：渲染付款方式
-            const payList = document.getElementById('settingsPaymentList');
-            payList.innerHTML = '';
-            payments.forEach((pay, index) => {
-                payList.innerHTML += `
-                    <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
-                        <span class="text-brand-textMain font-bold text-[15px]">${pay}</span>
-                        <button onclick="removePayment(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-                    </li>
-                `;
-            });
+            document.getElementById('settingsCategoryList').innerHTML = createListHTML(categories, 'removeCategory');
+            document.getElementById('settingsChannelList').innerHTML = createListHTML(channels, 'removeChannel');
+            document.getElementById('settingsPaymentList').innerHTML = createListHTML(payments, 'removePayment');
         }
 
         function addCategory() {
@@ -485,20 +561,33 @@
                 categories.push(val);
                 localStorage.setItem('my_categories', JSON.stringify(categories));
                 input.value = '';
-                renderSettings();
-                renderCategorySelect();
+                renderSettings(); renderFormDropdowns();
             }
         }
-
         function removeCategory(index) {
             if (categories.length <= 1) return alert('至少需保留一個分類');
             categories.splice(index, 1);
             localStorage.setItem('my_categories', JSON.stringify(categories));
-            renderSettings();
-            renderCategorySelect();
+            renderSettings(); renderFormDropdowns();
         }
 
-        // 修正5：新增與刪除付款方式邏輯
+        function addChannel() {
+            const input = document.getElementById('newChannelInput');
+            const val = input.value.trim();
+            if (val && !channels.includes(val)) {
+                channels.push(val);
+                localStorage.setItem('my_channels', JSON.stringify(channels));
+                input.value = '';
+                renderSettings(); renderFormDropdowns();
+            }
+        }
+        function removeChannel(index) {
+            if (channels.length <= 1) return alert('至少需保留一個管道');
+            channels.splice(index, 1);
+            localStorage.setItem('my_channels', JSON.stringify(channels));
+            renderSettings(); renderFormDropdowns();
+        }
+
         function addPayment() {
             const input = document.getElementById('newPaymentInput');
             const val = input.value.trim();
@@ -506,40 +595,32 @@
                 payments.push(val);
                 localStorage.setItem('my_payments', JSON.stringify(payments));
                 input.value = '';
-                renderSettings();
-                renderPaymentSelect();
+                renderSettings(); renderFormDropdowns();
             }
         }
-
         function removePayment(index) {
-            payments.splice(index, 1); // 允許刪到空，如果都不想設預設的話
+            payments.splice(index, 1);
             localStorage.setItem('my_payments', JSON.stringify(payments));
-            renderSettings();
-            renderPaymentSelect();
+            renderSettings(); renderFormDropdowns();
         }
 
-        function renderCategorySelect() {
-            const select = document.getElementById('subCategory');
-            select.innerHTML = '';
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.innerText = cat;
-                select.appendChild(option);
-            });
+        function renderFormDropdowns() {
+            const populate = (id, items, includeEmpty = false) => {
+                const select = document.getElementById(id);
+                select.innerHTML = includeEmpty ? '<option value="">未設定</option>' : '';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.innerText = item;
+                    select.appendChild(option);
+                });
+            };
+            populate('subCategory', categories);
+            populate('subChannel', channels);
+            populate('subPayment', payments, true);
         }
 
-        function renderPaymentSelect() {
-            const select = document.getElementById('subPayment');
-            select.innerHTML = '<option value="">未設定</option>';
-            payments.forEach(pay => {
-                const option = document.createElement('option');
-                option.value = pay;
-                option.innerText = pay;
-                select.appendChild(option);
-            });
-        }
-
+        // ======= 主畫面渲染 =======
         function renderApp() {
             const listEl = document.getElementById('subList');
             const listContainer = document.getElementById('subListContainer');
@@ -547,18 +628,16 @@
             const totalEl = document.getElementById('totalAmount');
             const countEl = document.getElementById('subCount');
 
-            const monthlyTotal = subscriptions.reduce((sum, sub) => {
-                let costPerMonth = sub.price;
-                if (sub.cycle === 'yearly') costPerMonth = sub.price / 12;
-                return sum + costPerMonth;
-            }, 0);
+            let monthlyTotal = 0;
+            subscriptions.forEach(sub => {
+                monthlyTotal += sub.cycle === 'yearly' ? sub.price / 12 : sub.price;
+            });
             
             totalEl.innerText = formatMoney(Math.round(monthlyTotal));
             countEl.innerText = `${subscriptions.length} 項訂閱`;
 
             localStorage.setItem('my_subscriptions', JSON.stringify(subscriptions));
-            renderCategorySelect();
-            renderPaymentSelect();
+            renderFormDropdowns();
             listEl.innerHTML = '';
 
             if (subscriptions.length === 0) {
@@ -580,7 +659,7 @@
                     const dateDisplay = sub.cycle === 'yearly' ? `每年 ${sub.date} 扣款` : `每月 ${sub.date} 日扣款`;
                     const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-1.5 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded leading-none">年付</span>' : '';
 
-                    // 修正4：極簡化列表 UI (移除付款、管道，日期移到名稱下)
+                    // 極簡化明細
                     item.innerHTML = `
                         <div class="flex flex-1 items-center gap-3">
                             <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
@@ -603,6 +682,100 @@
             }
         }
 
+        // ======= 統計圖表渲染 =======
+        function renderStats() {
+            const annualTotalEl = document.getElementById('statsAnnualTotal');
+            const categoryListEl = document.getElementById('statsCategoryList');
+            
+            let annualTotal = 0;
+            const categoryMonthlyTotals = {};
+
+            // 統計計算
+            subscriptions.forEach(sub => {
+                const yearlyCost = sub.cycle === 'yearly' ? sub.price : sub.price * 12;
+                const monthlyCost = sub.cycle === 'yearly' ? sub.price / 12 : sub.price;
+                
+                annualTotal += yearlyCost;
+
+                if (!categoryMonthlyTotals[sub.category]) {
+                    categoryMonthlyTotals[sub.category] = 0;
+                }
+                categoryMonthlyTotals[sub.category] += monthlyCost;
+            });
+
+            annualTotalEl.innerText = formatMoney(Math.round(annualTotal));
+
+            // 準備 Chart.js 資料
+            const labels = Object.keys(categoryMonthlyTotals);
+            const dataValues = Object.values(categoryMonthlyTotals).map(v => Math.round(v));
+            const totalMonthlyAmount = dataValues.reduce((a, b) => a + b, 0);
+
+            // 莫蘭迪圖表配色
+            const morandiColors = ['#748CAB', '#A2B5CD', '#3E5C76', '#C5D3E8', '#5A7A96', '#8EA4BD', '#2A435D'];
+
+            // 渲染圓餅圖
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy(); // 避免重複渲染
+            
+            if(dataValues.length === 0) {
+                categoryListEl.innerHTML = '<p class="text-center text-brand-textSub py-4 text-sm">目前尚無訂閱資料</p>';
+                return;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: morandiColors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false }, // 隱藏預設圖例，使用自訂清單
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let value = context.parsed;
+                                    let percentage = Math.round((value / totalMonthlyAmount) * 100);
+                                    return ` TWD ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 渲染下方自訂分類統計清單
+            categoryListEl.innerHTML = '';
+            labels.forEach((label, i) => {
+                const value = dataValues[i];
+                const pct = totalMonthlyAmount ? Math.round((value / totalMonthlyAmount) * 100) : 0;
+                const color = morandiColors[i % morandiColors.length];
+
+                categoryListEl.innerHTML += `
+                    <div class="flex items-center justify-between py-3 border-b border-brand-light/40 last:border-0">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full" style="background-color: ${color}"></span>
+                            <span class="font-bold text-[14px] text-brand-dark">${label}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-brand-textSub w-8 text-right">${pct}%</span>
+                            <span class="font-bold text-[15px] text-brand-dark w-16 text-right">${value}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ======= 儲存與表單操作 =======
         function handleSave(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
@@ -655,7 +828,6 @@
             document.getElementById('iconDropdown').classList.add('hidden');
             formModal.classList.add('active');
             overlay.classList.add('active');
-            
             mainScroll.style.overflowY = 'hidden';
             
             if(!isEdit) {
@@ -666,8 +838,11 @@
                 const currentIcon = availableIcons[0];
                 document.getElementById('currentIconDisplay').className = currentIcon;
                 document.getElementById('subIcon').value = currentIcon;
+                
+                renderFormDropdowns();
                 if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
-                document.getElementById('subPayment').value = ''; // 預設未設定
+                if(channels.length > 0) document.getElementById('subChannel').value = channels[0];
+                document.getElementById('subPayment').value = '';
                 
                 document.getElementById('subCycle').value = 'monthly';
                 toggleDateInput();
@@ -684,8 +859,8 @@
             document.getElementById('formModalTitle').innerText = '編輯訂閱';
             document.getElementById('subName').value = sub.name;
             document.getElementById('subPrice').value = sub.price;
-            document.getElementById('subCategory').value = sub.category;
-            document.getElementById('subChannel').value = sub.channel;
+            document.getElementById('subCategory').value = sub.category || (categories[0] || '');
+            document.getElementById('subChannel').value = sub.channel || (channels[0] || '');
             document.getElementById('subPayment').value = sub.payment || '';
             document.getElementById('subIcon').value = sub.icon;
             document.getElementById('currentIconDisplay').className = sub.icon;
@@ -730,8 +905,6 @@
             document.getElementById('detailPayment').innerText = sub.payment || '未設定';
 
             mainScroll.style.overflowY = 'hidden';
-            
-            // 修正2：每次開啟強制捲動到最上方
             document.getElementById('detailModalScroll').scrollTop = 0;
 
             detailModal.classList.add('active');
@@ -794,7 +967,6 @@
                 
                 modalElement.style.transition = 'none'; 
                 modalElement.style.willChange = 'transform';
-                
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
             }, { passive: true });
 
@@ -816,7 +988,6 @@
                     animationFrameId = requestAnimationFrame(() => {
                         modalElement.style.transform = `translateY(${deltaY}px)`;
                     });
-                    
                     if(e.cancelable) e.preventDefault();
                 }
             }, { passive: false });
@@ -824,14 +995,12 @@
             const handleEnd = () => {
                 if (!isDragging) return;
                 isDragging = false;
-                
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 
                 modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)';
                 modalElement.style.willChange = 'auto';
 
                 const deltaY = currentY - startY;
-                
                 if (deltaY > 100 || velocity > 0.6) {
                     closeAllModals();
                 } else {
