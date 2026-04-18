@@ -70,7 +70,8 @@
         <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-2 z-20 flex flex-col border-b border-transparent">
             <header class="flex justify-between items-center mb-5">
                 <h1 class="text-2xl font-bold tracking-wide text-brand-dark" id="pageTitle">我的訂閱</h1>
-                <button onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0">
+                <!-- 給新增按鈕加上 ID 以便在設定頁隱藏 -->
+                <button id="headerAddBtn" onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0">
                     <i class="fa-solid fa-plus text-lg"></i>
                 </button>
             </header>
@@ -95,7 +96,7 @@
             </div>
             
             <div id="settingsHeaderContent" class="hidden pb-2">
-                <p class="text-brand-textSub text-sm">自訂你的訂閱選項，這將會出現在新增訂閱的選單中。</p>
+                <p class="text-brand-textSub text-sm">自訂你的下拉選單選項，這將會出現在新增訂閱時供你選擇。</p>
             </div>
         </div>
 
@@ -117,6 +118,7 @@
             </div>
 
             <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
+                <!-- 自訂分類管理 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-layer-group text-brand-primary"></i>
@@ -131,21 +133,18 @@
                     </div>
                 </div>
 
+                <!-- 自訂付款方式管理 (取代原本的 Icon 管理) -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
-                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex flex-col gap-1">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-icons text-brand-primary"></i>
-                            <h4 class="font-bold text-brand-dark">圖示庫管理</h4>
-                        </div>
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-regular fa-credit-card text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">付款方式管理</h4>
                     </div>
-                    <div class="p-5 bg-white border-b border-brand-light/40">
-                        <p class="text-xs text-brand-textSub mb-4">請輸入 FontAwesome 的 Class 名稱</p>
-                        <div id="settingsIconList" class="flex flex-wrap gap-4"></div>
-                    </div>
-                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center">
-                        <input type="text" id="newIconInput" placeholder="fa-solid fa-star" 
-                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-mono text-brand-dark placeholder:text-brand-textSub/50 focus:border-brand-primary transition-colors">
-                        <button onclick="addIcon()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    <ul id="settingsPaymentList" class="flex flex-col"></ul>
+                    
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newPaymentInput" placeholder="新增付款方式 (例如：Apple Pay)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addPayment()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
                     </div>
                 </div>
             </div>
@@ -171,7 +170,7 @@
         <!-- ================= 共用 Overlay ================= -->
         <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px]" onclick="closeAllModals()"></div>
         
-        <!-- ================= 4. 表單 Modal (新增/編輯) ================= -->
+        <!-- ================= 4. 表單 Modal ================= -->
         <div id="formModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
             
             <div id="formModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
@@ -251,15 +250,15 @@
                             <option value="第三方代購">第三方代購</option>
                         </select>
                     </div>
+                    
+                    <!-- 修正5：付款方式改為下拉選單 -->
                     <div>
-                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款管道 (選填)</label>
-                        <input type="text" id="subPayment" placeholder="例如：台新 @GoGo卡" 
-                               class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款方式 (選填)</label>
+                        <select id="subPayment" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
                     </div>
                 </form>
             </div>
             
-            <!-- 表單 Modal 固定底部按鈕 -->
             <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg">
                 <button type="button" onclick="document.getElementById('saveForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
                     確認儲存
@@ -267,10 +266,10 @@
             </div>
         </div>
 
-        <!-- ================= 5. 訂閱詳細資訊 Modal (結構完全對標新增表單) ================= -->
+        <!-- ================= 5. 訂閱詳細資訊 Modal ================= -->
+        <!-- 修正1：外框加入 overflow-hidden 確保不跑版 -->
         <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
             
-            <!-- 詳細資訊 Header (與新增表單一模一樣) -->
             <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
                 <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
                 <button onclick="closeAllModals()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
@@ -279,8 +278,8 @@
                 <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">訂閱詳細資訊</h3>
             </div>
             
-            <!-- 詳細資訊 內容捲動區 (背景為白) -->
-            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+            <!-- 修正1：內容區加入 id="detailModalScroll"，並設為 overflow-y-auto 與 hide-scrollbar -->
+            <div id="detailModalScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-white">
                 <div class="px-6 py-6 flex flex-col">
                     <div class="flex flex-col items-center mb-8">
                         <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
@@ -315,7 +314,7 @@
                 </div>
             </div>
 
-            <!-- 詳細資訊 固定底部按鈕 (與新增表單位置對齊) -->
+            <!-- 固定底部按鈕 -->
             <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3">
                 <button onclick="triggerDeleteFromDetail()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
                     <i class="fa-solid fa-trash-can"></i>
@@ -343,10 +342,16 @@
 
     <script>
         let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
+        
         let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
         let categories = JSON.parse(localStorage.getItem('my_categories')) || defaultCategories;
-        let defaultIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping'];
-        let availableIcons = JSON.parse(localStorage.getItem('my_icons')) || defaultIcons;
+        
+        // 修正5：預設付款方式清單
+        let defaultPayments = ['台新 @GoGo卡', '國泰 CUBE 卡', '富邦 J卡', 'Apple Pay'];
+        let payments = JSON.parse(localStorage.getItem('my_payments')) || defaultPayments;
+
+        // 移除設定頁面自訂圖示功能，使用固定清單供表單選擇
+        const availableIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping', 'fa-solid fa-pen-nib', 'fa-brands fa-figma', 'fa-brands fa-discord'];
         
         let currentDetailId = null;
 
@@ -359,6 +364,7 @@
             const settingsHeader = document.getElementById('settingsHeaderContent');
             const pageTitle = document.getElementById('pageTitle');
             const mainScroll = document.getElementById('mainScroll');
+            const headerAddBtn = document.getElementById('headerAddBtn'); // 修正3
             
             mainScroll.scrollTop = 0;
             
@@ -372,6 +378,7 @@
                 viewSettings.classList.add('hidden');
                 homeHeader.classList.remove('hidden');
                 settingsHeader.classList.add('hidden');
+                headerAddBtn.classList.remove('hidden'); // 首頁顯示 + 號
                 pageTitle.innerText = "我的訂閱";
                 document.getElementById('tab-home').classList.add('text-brand-dark');
                 document.getElementById('tab-home').classList.remove('text-brand-textSub');
@@ -381,6 +388,7 @@
                 viewSettings.classList.remove('hidden');
                 homeHeader.classList.add('hidden');
                 settingsHeader.classList.remove('hidden');
+                headerAddBtn.classList.add('hidden'); // 修正3：設定頁隱藏 + 號
                 pageTitle.innerText = "設定與管理";
                 document.getElementById('tab-settings-icon').classList.add('text-brand-dark');
                 document.getElementById('tab-settings-text').classList.add('text-brand-dark');
@@ -445,6 +453,7 @@
         }
 
         function renderSettings() {
+            // 渲染分類
             const catList = document.getElementById('settingsCategoryList');
             catList.innerHTML = '';
             categories.forEach((cat, index) => {
@@ -456,14 +465,15 @@
                 `;
             });
 
-            const iconList = document.getElementById('settingsIconList');
-            iconList.innerHTML = '';
-            availableIcons.forEach((iconClass, index) => {
-                iconList.innerHTML += `
-                    <div class="relative w-12 h-12 bg-brand-bg rounded-[14px] flex items-center justify-center text-brand-dark text-xl shrink-0 border border-brand-light/30">
-                        <i class="${iconClass}"></i>
-                        <button onclick="removeIcon(${index})" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 shadow-md text-white rounded-full text-[10px] flex items-center justify-center transition-transform hover:scale-110 active:scale-95"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
+            // 修正5：渲染付款方式
+            const payList = document.getElementById('settingsPaymentList');
+            payList.innerHTML = '';
+            payments.forEach((pay, index) => {
+                payList.innerHTML += `
+                    <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
+                        <span class="text-brand-textMain font-bold text-[15px]">${pay}</span>
+                        <button onclick="removePayment(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    </li>
                 `;
             });
         }
@@ -488,22 +498,24 @@
             renderCategorySelect();
         }
 
-        function addIcon() {
-            const input = document.getElementById('newIconInput');
+        // 修正5：新增與刪除付款方式邏輯
+        function addPayment() {
+            const input = document.getElementById('newPaymentInput');
             const val = input.value.trim();
-            if (val && !availableIcons.includes(val)) {
-                availableIcons.push(val);
-                localStorage.setItem('my_icons', JSON.stringify(availableIcons));
+            if (val && !payments.includes(val)) {
+                payments.push(val);
+                localStorage.setItem('my_payments', JSON.stringify(payments));
                 input.value = '';
                 renderSettings();
+                renderPaymentSelect();
             }
         }
 
-        function removeIcon(index) {
-            if (availableIcons.length <= 1) return alert('至少需保留一個圖示');
-            availableIcons.splice(index, 1);
-            localStorage.setItem('my_icons', JSON.stringify(availableIcons));
+        function removePayment(index) {
+            payments.splice(index, 1); // 允許刪到空，如果都不想設預設的話
+            localStorage.setItem('my_payments', JSON.stringify(payments));
             renderSettings();
+            renderPaymentSelect();
         }
 
         function renderCategorySelect() {
@@ -513,6 +525,17 @@
                 const option = document.createElement('option');
                 option.value = cat;
                 option.innerText = cat;
+                select.appendChild(option);
+            });
+        }
+
+        function renderPaymentSelect() {
+            const select = document.getElementById('subPayment');
+            select.innerHTML = '<option value="">未設定</option>';
+            payments.forEach(pay => {
+                const option = document.createElement('option');
+                option.value = pay;
+                option.innerText = pay;
                 select.appendChild(option);
             });
         }
@@ -535,6 +558,7 @@
 
             localStorage.setItem('my_subscriptions', JSON.stringify(subscriptions));
             renderCategorySelect();
+            renderPaymentSelect();
             listEl.innerHTML = '';
 
             if (subscriptions.length === 0) {
@@ -550,30 +574,28 @@
                     return dateA - dateB;
                 }).forEach(sub => {
                     const item = document.createElement('div');
-                    item.className = "px-5 py-4 border-b border-brand-light/60 last:border-b-0 flex justify-between items-center cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg transition-colors";
+                    item.className = "px-5 py-3.5 border-b border-brand-light/60 last:border-b-0 flex justify-between items-center cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg transition-colors";
                     item.onclick = () => openDetailModal(sub.id);
 
-                    const paymentText = sub.payment ? sub.payment : '未設定扣款';
                     const dateDisplay = sub.cycle === 'yearly' ? `每年 ${sub.date} 扣款` : `每月 ${sub.date} 日扣款`;
-                    const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-2 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded">年付</span>' : '';
+                    const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-1.5 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded leading-none">年付</span>' : '';
 
+                    // 修正4：極簡化列表 UI (移除付款、管道，日期移到名稱下)
                     item.innerHTML = `
-                        <div class="flex-1">
-                            <div class="text-[13px] font-bold text-brand-dark mb-1 tracking-wide">${dateDisplay}</div>
-                            <div class="text-[15px] text-brand-textMain mb-1 flex items-center font-medium">
-                                <i class="${sub.icon} text-brand-primary w-[22px] text-center mr-1"></i>
-                                ${sub.name} ${cycleBadge}
+                        <div class="flex flex-1 items-center gap-3">
+                            <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
+                                <i class="${sub.icon}"></i>
                             </div>
-                            <div class="text-xs text-brand-textSub">扣款: ${paymentText}</div>
+                            <div class="flex flex-col">
+                                <div class="text-[15px] font-bold text-brand-dark flex items-center leading-tight mb-1">
+                                    ${sub.name} ${cycleBadge}
+                                </div>
+                                <div class="text-[12px] text-brand-textSub font-medium leading-none">${dateDisplay}</div>
+                            </div>
                         </div>
-                        <div class="text-right flex flex-col items-end justify-center min-w-[120px]">
-                            <div class="flex items-center mb-1">
-                                <span class="text-xs text-brand-textSub mr-1.5 font-bold">TWD</span>
-                                <span class="text-lg font-bold text-brand-dark leading-none">${sub.price}</span>
-                                <i class="fa-solid fa-chevron-right text-brand-textSub text-[13px] ml-2"></i>
-                            </div>
-                            <div class="text-[13px] text-brand-textMain mb-1 font-medium">${sub.category}</div>
-                            <div class="text-xs text-brand-textSub">${sub.channel}</div>
+                        <div class="text-right flex items-center pl-2 shrink-0">
+                            <span class="text-[17px] font-bold text-brand-dark leading-none">${sub.price}</span>
+                            <i class="fa-solid fa-chevron-right text-brand-textSub text-[12px] ml-2 opacity-50"></i>
                         </div>
                     `;
                     listEl.appendChild(item);
@@ -645,6 +667,7 @@
                 document.getElementById('currentIconDisplay').className = currentIcon;
                 document.getElementById('subIcon').value = currentIcon;
                 if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
+                document.getElementById('subPayment').value = ''; // 預設未設定
                 
                 document.getElementById('subCycle').value = 'monthly';
                 toggleDateInput();
@@ -704,9 +727,12 @@
 
             document.getElementById('detailCategory').innerText = sub.category;
             document.getElementById('detailChannel').innerText = sub.channel;
-            document.getElementById('detailPayment').innerText = sub.payment || '尚未設定';
+            document.getElementById('detailPayment').innerText = sub.payment || '未設定';
 
             mainScroll.style.overflowY = 'hidden';
+            
+            // 修正2：每次開啟強制捲動到最上方
+            document.getElementById('detailModalScroll').scrollTop = 0;
 
             detailModal.classList.add('active');
             overlay.classList.add('active');
