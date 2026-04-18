@@ -110,7 +110,6 @@
         <!-- ================= 2. 內容滾動區域 ================= -->
         <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth">
             
-            <!-- 【首頁：訂閱列表】 -->
             <div id="view-home" class="flex flex-col gap-4">
                 <div id="subListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden hidden mb-6">
                     <div id="subList" class="flex flex-col"></div>
@@ -156,7 +155,7 @@
             <!-- 【更多：設定頁面】 -->
             <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
                 
-                <!-- 匯率設定 (新增功能) -->
+                <!-- 匯率設定 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-money-bill-transfer text-brand-primary"></i>
@@ -253,8 +252,9 @@
                     <div class="relative">
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">服務名稱</label>
                         <div class="flex gap-3 relative z-10">
-                            <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light">
-                                <i id="currentIconDisplay" class="fa-brands fa-youtube"></i>
+                            <!-- 修改：將 i 標籤改為 div，以便由 JS 注入 img 或 i -->
+                            <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light relative overflow-hidden">
+                                <div id="currentIconDisplay" class="flex items-center justify-center w-full h-full"></div>
                             </button>
                             <input type="text" id="subName" required placeholder="例如：Netflix" 
                                    class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
@@ -264,7 +264,7 @@
                             <p class="text-xs text-brand-textSub mb-2 font-medium">選擇圖示：</p>
                             <div class="grid grid-cols-6 gap-2 max-h-[150px] overflow-y-auto hide-scrollbar" id="iconDropdownGrid"></div>
                         </div>
-                        <input type="hidden" id="subIcon" value="fa-brands fa-youtube">
+                        <input type="hidden" id="subIcon" value="netflix.svg">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
@@ -277,7 +277,6 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額</label>
-                            <!-- 變更：加入幣別選擇器 -->
                             <div class="flex items-center bg-brand-bg border border-transparent rounded-[16px] focus-within:border-brand-primary focus-within:bg-white transition-all overflow-hidden">
                                 <select id="subCurrency" class="bg-transparent border-none outline-none pl-4 py-3 font-bold text-brand-dark appearance-none pr-1">
                                     <option value="TWD">TWD</option>
@@ -346,12 +345,12 @@
             <div id="detailModalScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-white">
                 <div class="px-6 py-6 flex flex-col">
                     <div class="flex flex-col items-center mb-8 relative">
-                        <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
-                            <i id="detailIcon" class=""></i>
+                        <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50 overflow-hidden relative">
+                            <!-- 修改：改為 div 容器 -->
+                            <div id="detailIconDisplay" class="flex items-center justify-center w-full h-full"></div>
                         </div>
                         <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
                         <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
-                        <!-- 日幣換算提示 -->
                         <div id="detailTwdEquiv" class="text-sm font-medium text-brand-textSub mt-1 hidden"></div>
                         <span id="detailCycleBadge" class="mt-3 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
                     </div>
@@ -407,7 +406,6 @@
     </div>
 
     <script>
-        // ======= 資料初始化 =======
         let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
         
         let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
@@ -419,15 +417,31 @@
         let defaultPayments = ['台新 @GoGo卡', '國泰 CUBE 卡', '富邦 J卡', 'Apple Pay'];
         let payments = JSON.parse(localStorage.getItem('my_payments')) || defaultPayments;
 
-        // 匯率設定初始化
         let rates = JSON.parse(localStorage.getItem('my_rates')) || { JPY: 0.21 };
 
-        const availableIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping', 'fa-solid fa-pen-nib', 'fa-brands fa-figma', 'fa-brands fa-discord'];
+        // ==========================================
+        // 核心更新：將你的 SVG 加入支援清單
+        // ==========================================
+        const availableIcons = [
+            'netflix.svg', 
+            'line.svg', 
+            'icloud.svg', 
+            'fa-brands fa-youtube', 
+            'fa-brands fa-spotify', 
+            'fa-brands fa-apple', 
+            'fa-solid fa-film', 
+            'fa-solid fa-gamepad', 
+            'fa-solid fa-cloud', 
+            'fa-solid fa-dumbbell', 
+            'fa-solid fa-music', 
+            'fa-solid fa-tv', 
+            'fa-solid fa-mobile-screen', 
+            'fa-solid fa-cart-shopping'
+        ];
         
         let currentDetailId = null;
         let chartInstance = null;
 
-        // 加入幣別參數的金額格式化
         const formatMoney = (num, currency = 'TWD') => {
             return new Intl.NumberFormat('zh-TW', { 
                 style: 'currency', 
@@ -436,7 +450,26 @@
             }).format(num);
         };
 
-        // ======= 導覽列與視圖切換 =======
+        // ==========================================
+        // 核心更新：自動判斷 SVG 或 FontAwesome 的引擎
+        // ==========================================
+        function getIconHTML(iconVal, sizeStr = 'normal') {
+            if (!iconVal) iconVal = 'fa-solid fa-box-open'; // 防呆
+            
+            // 如果字串包含 .svg，就渲染成 img 圖片標籤
+            if (iconVal.includes('.svg')) {
+                // 根據不同的顯示區域，給予對應的寬高限制，確保不會破版
+                let sizeClass = 'w-6 h-6'; 
+                if (sizeStr === 'large') sizeClass = 'w-10 h-10'; // 細節大圖
+                
+                return `<img src="${iconVal}" class="${sizeClass} object-contain" alt="icon" style="pointer-events: none;">`;
+            } 
+            // 否則就渲染成傳統的 FontAwesome i 標籤
+            else {
+                return `<i class="${iconVal}"></i>`;
+            }
+        }
+
         function switchTab(tab) {
             const viewHome = document.getElementById('view-home');
             const viewStats = document.getElementById('view-stats');
@@ -537,21 +570,23 @@
         function renderIconDropdown() {
             const grid = document.getElementById('iconDropdownGrid');
             grid.innerHTML = '';
-            availableIcons.forEach(iconClass => {
+            availableIcons.forEach(iconVal => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg";
-                btn.innerHTML = `<i class="${iconClass}"></i>`;
+                btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg relative";
+                
+                // 套用自動判斷渲染器
+                btn.innerHTML = getIconHTML(iconVal, 'normal');
+                
                 btn.onclick = () => {
-                    document.getElementById('currentIconDisplay').className = iconClass;
-                    document.getElementById('subIcon').value = iconClass;
+                    document.getElementById('currentIconDisplay').innerHTML = getIconHTML(iconVal, 'normal');
+                    document.getElementById('subIcon').value = iconVal;
                     document.getElementById('iconDropdown').classList.add('hidden');
                 };
                 grid.appendChild(btn);
             });
         }
 
-        // ======= 匯率更新 =======
         function updateRate(currency, value) {
             const num = parseFloat(value);
             if (!isNaN(num) && num > 0) {
@@ -561,9 +596,7 @@
             }
         }
 
-        // ======= 設定頁面渲染 =======
         function renderSettings() {
-            // 初始化匯率輸入框
             document.getElementById('rateJPY').value = rates.JPY;
 
             const createListHTML = (items, removeFuncStr) => {
@@ -650,7 +683,6 @@
             populate('subPayment', payments, true);
         }
 
-        // ======= 主畫面渲染 =======
         function renderApp() {
             const listEl = document.getElementById('subList');
             const listContainer = document.getElementById('subListContainer');
@@ -661,12 +693,10 @@
             let monthlyTotal = 0;
             subscriptions.forEach(sub => {
                 let cost = sub.price;
-                const currency = sub.currency || 'TWD'; // 相容舊資料
-                // 幣別轉換
+                const currency = sub.currency || 'TWD';
                 if (currency === 'JPY') {
                     cost = cost * (rates.JPY || 0.21);
                 }
-                // 週期轉換
                 if (sub.cycle === 'yearly') {
                     cost = cost / 12;
                 }
@@ -703,7 +733,8 @@
                     item.innerHTML = `
                         <div class="flex flex-1 items-center gap-3">
                             <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
-                                <i class="${sub.icon}"></i>
+                                <!-- 套用自動渲染器 -->
+                                ${getIconHTML(sub.icon, 'normal')}
                             </div>
                             <div class="flex flex-col">
                                 <div class="text-[15px] font-bold text-brand-dark flex items-center leading-tight mb-1">
@@ -723,7 +754,6 @@
             }
         }
 
-        // ======= 統計圖表渲染 =======
         function renderStats() {
             const annualTotalEl = document.getElementById('statsAnnualTotal');
             const categoryListEl = document.getElementById('statsCategoryList');
@@ -735,7 +765,6 @@
                 let baseMonthlyCost = sub.price;
                 const currency = sub.currency || 'TWD';
                 
-                // 轉為台幣計價
                 if (currency === 'JPY') {
                     baseMonthlyCost = baseMonthlyCost * (rates.JPY || 0.21);
                 }
@@ -799,7 +828,6 @@
             });
 
             categoryListEl.innerHTML = '';
-            // 將佔比排序
             const sortedIndices = dataValues.map((_, i) => i).sort((a, b) => dataValues[b] - dataValues[a]);
             
             sortedIndices.forEach(i => {
@@ -823,7 +851,6 @@
             });
         }
 
-        // ======= 儲存與表單操作 =======
         function handleSave(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
@@ -884,8 +911,8 @@
                 document.getElementById('editId').value = '';
                 document.getElementById('formModalTitle').innerText = '新增訂閱';
                 
-                const currentIcon = availableIcons[0];
-                document.getElementById('currentIconDisplay').className = currentIcon;
+                const currentIcon = availableIcons[0]; // 現在會是 netflix.svg
+                document.getElementById('currentIconDisplay').innerHTML = getIconHTML(currentIcon, 'normal');
                 document.getElementById('subIcon').value = currentIcon;
                 
                 renderFormDropdowns();
@@ -914,7 +941,9 @@
             document.getElementById('subChannel').value = sub.channel || (channels[0] || '');
             document.getElementById('subPayment').value = sub.payment || '';
             document.getElementById('subIcon').value = sub.icon;
-            document.getElementById('currentIconDisplay').className = sub.icon;
+            
+            // 套用自動渲染器
+            document.getElementById('currentIconDisplay').innerHTML = getIconHTML(sub.icon, 'normal');
             
             document.getElementById('subCycle').value = sub.cycle || 'monthly';
             toggleDateInput();
@@ -935,13 +964,15 @@
             if(!sub) return;
 
             currentDetailId = id;
-            document.getElementById('detailIcon').className = sub.icon;
+            
+            // 套用自動渲染器 (大尺寸)
+            document.getElementById('detailIconDisplay').innerHTML = getIconHTML(sub.icon, 'large');
+            
             document.getElementById('detailName').innerText = sub.name;
             
             const currency = sub.currency || 'TWD';
             document.getElementById('detailPrice').innerText = formatMoney(sub.price, currency);
 
-            // 日幣轉換提示
             const equivEl = document.getElementById('detailTwdEquiv');
             if (currency === 'JPY') {
                 const twdEquivalent = Math.round(sub.price * (rates.JPY || 0.21));
@@ -1013,7 +1044,6 @@
             }
         });
 
-        // 拖曳關閉視窗邏輯
         function setupSmoothDragToClose(modalElement, headerElement) {
             let startY = 0;
             let currentY = 0;
