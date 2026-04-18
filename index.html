@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Chart.js 圖表套件 -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
@@ -80,7 +80,6 @@
                 </button>
             </header>
 
-            <!-- 首頁專屬 Header -->
             <div id="homeHeaderContent" class="flex flex-col gap-5">
                 <section class="bg-brand-card rounded-[24px] p-6 shadow-soft relative shrink-0">
                     <div class="flex items-center gap-2 mb-2 text-brand-textSub">
@@ -99,14 +98,12 @@
                 </div>
             </div>
             
-            <!-- 統計頁專屬 Header -->
             <div id="statsHeaderContent" class="hidden pb-2">
-                <p class="text-brand-textSub text-sm">各項分類的花費佔比與年度預估統計。</p>
+                <p class="text-brand-textSub text-sm">各項分類的花費佔比與年度預估統計 (皆以台幣計)。</p>
             </div>
 
-            <!-- 設定頁專屬 Header -->
             <div id="settingsHeaderContent" class="hidden pb-2">
-                <p class="text-brand-textSub text-sm">自訂你的下拉選單選項，這將會出現在新增訂閱時供你選擇。</p>
+                <p class="text-brand-textSub text-sm">管理你的下拉選單選項與外幣匯率。</p>
             </div>
         </div>
 
@@ -128,14 +125,10 @@
                 </div>
             </div>
 
-            <!-- 【統計頁面：圓餅圖與年消費】 -->
+            <!-- 【統計頁面】 -->
             <div id="view-stats" class="hidden flex flex-col gap-6 pb-10 pt-2">
-                
-                <!-- 年消費總計卡片 -->
                 <div class="bg-gradient-to-br from-brand-dark to-brand-primary rounded-[24px] shadow-soft p-6 flex flex-col relative overflow-hidden text-white">
-                    <!-- 背景裝飾 -->
                     <i class="fa-solid fa-chart-line absolute -right-6 -bottom-6 text-8xl opacity-10"></i>
-                    
                     <div class="flex items-center gap-2 mb-2 text-white/80 z-10">
                         <i class="fa-solid fa-calendar-days"></i>
                         <h2 class="text-sm font-medium">預估年總花費 (TWD)</h2>
@@ -146,29 +139,41 @@
                     <p class="text-xs text-white/70 mt-4 z-10">基於目前的月付與年付項目進行推算</p>
                 </div>
 
-                <!-- 圓餅圖與分類統計清單 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-chart-pie text-brand-primary"></i>
                         <h4 class="font-bold text-brand-dark">各分類佔比 (每月)</h4>
                     </div>
                     <div class="p-5">
-                        <!-- Chart.js 畫布 -->
                         <div class="relative h-[220px] w-full flex justify-center mb-6">
                             <canvas id="categoryChart"></canvas>
                         </div>
-                        
-                        <!-- 分類統計條列清單 -->
-                        <div id="statsCategoryList" class="flex flex-col gap-0 border-t border-brand-light/40 pt-2">
-                            <!-- 由 JS 動態生成 -->
-                        </div>
+                        <div id="statsCategoryList" class="flex flex-col gap-0 border-t border-brand-light/40 pt-2"></div>
                     </div>
                 </div>
             </div>
 
             <!-- 【更多：設定頁面】 -->
             <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
-                <!-- 自訂分類 -->
+                
+                <!-- 匯率設定 (新增功能) -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-money-bill-transfer text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">匯率設定</h4>
+                    </div>
+                    <div class="px-5 py-4 flex justify-between items-center bg-white">
+                        <span class="text-brand-textMain font-bold text-[15px]">日幣 (JPY)</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-brand-textSub">x</span>
+                            <input type="number" id="rateJPY" step="0.001" onchange="updateRate('JPY', this.value)" 
+                                   class="w-20 bg-brand-bg border border-brand-light/50 rounded-xl px-3 py-2 outline-none text-sm font-bold text-brand-dark text-right focus:border-brand-primary transition-colors">
+                            <span class="text-sm text-brand-textSub">TWD</span>
+                        </div>
+                    </div>
+                    <p class="px-5 pb-4 text-xs text-brand-textSub -mt-1">此匯率將用於計算首頁總計與統計圖表。</p>
+                </div>
+
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-layer-group text-brand-primary"></i>
@@ -182,7 +187,6 @@
                     </div>
                 </div>
 
-                <!-- 自訂訂閱管道 (新增功能 1) -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-solid fa-store text-brand-primary"></i>
@@ -196,7 +200,6 @@
                     </div>
                 </div>
 
-                <!-- 自訂付款方式 -->
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
                         <i class="fa-regular fa-credit-card text-brand-primary"></i>
@@ -273,9 +276,17 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額 (TWD)</label>
-                            <input type="number" id="subPrice" required min="0" placeholder="390" 
-                                   class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額</label>
+                            <!-- 變更：加入幣別選擇器 -->
+                            <div class="flex items-center bg-brand-bg border border-transparent rounded-[16px] focus-within:border-brand-primary focus-within:bg-white transition-all overflow-hidden">
+                                <select id="subCurrency" class="bg-transparent border-none outline-none pl-4 py-3 font-bold text-brand-dark appearance-none pr-1">
+                                    <option value="TWD">TWD</option>
+                                    <option value="JPY">JPY</option>
+                                </select>
+                                <div class="w-[1.5px] h-4 bg-brand-light mx-1"></div>
+                                <input type="number" id="subPrice" required min="0" step="any" placeholder="390" 
+                                       class="bg-transparent border-none outline-none w-full px-2 py-3 font-bold text-lg text-brand-dark placeholder:text-brand-textSub/50">
+                            </div>
                         </div>
                     </div>
 
@@ -303,13 +314,10 @@
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">分類</label>
                         <select id="subCategory" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
                     </div>
-                    
-                    <!-- 訂閱管道改為動態渲染 -->
                     <div>
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">訂閱管道</label>
                         <select id="subChannel" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
                     </div>
-                    
                     <div>
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款方式 (選填)</label>
                         <select id="subPayment" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
@@ -337,13 +345,15 @@
             
             <div id="detailModalScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-white">
                 <div class="px-6 py-6 flex flex-col">
-                    <div class="flex flex-col items-center mb-8">
+                    <div class="flex flex-col items-center mb-8 relative">
                         <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
                             <i id="detailIcon" class=""></i>
                         </div>
                         <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
                         <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
-                        <span id="detailCycleBadge" class="mt-2 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
+                        <!-- 日幣換算提示 -->
+                        <div id="detailTwdEquiv" class="text-sm font-medium text-brand-textSub mt-1 hidden"></div>
+                        <span id="detailCycleBadge" class="mt-3 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
                     </div>
 
                     <div class="bg-brand-bg rounded-[20px] p-5 flex flex-col gap-4 border border-brand-light/30">
@@ -409,12 +419,22 @@
         let defaultPayments = ['台新 @GoGo卡', '國泰 CUBE 卡', '富邦 J卡', 'Apple Pay'];
         let payments = JSON.parse(localStorage.getItem('my_payments')) || defaultPayments;
 
+        // 匯率設定初始化
+        let rates = JSON.parse(localStorage.getItem('my_rates')) || { JPY: 0.21 };
+
         const availableIcons = ['fa-brands fa-youtube', 'fa-brands fa-spotify', 'fa-brands fa-apple', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-cloud', 'fa-solid fa-dumbbell', 'fa-solid fa-music', 'fa-solid fa-tv', 'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping', 'fa-solid fa-pen-nib', 'fa-brands fa-figma', 'fa-brands fa-discord'];
         
         let currentDetailId = null;
-        let chartInstance = null; // 紀錄圓餅圖實例
+        let chartInstance = null;
 
-        const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(num);
+        // 加入幣別參數的金額格式化
+        const formatMoney = (num, currency = 'TWD') => {
+            return new Intl.NumberFormat('zh-TW', { 
+                style: 'currency', 
+                currency: currency, 
+                minimumFractionDigits: 0 
+            }).format(num);
+        };
 
         // ======= 導覽列與視圖切換 =======
         function switchTab(tab) {
@@ -432,7 +452,6 @@
             
             mainScroll.scrollTop = 0;
             
-            // 重置導覽列樣式 (灰色與一般字重)
             ['home', 'stats', 'settings'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.remove('text-brand-dark', 'font-bold');
                 document.getElementById(`tab-${t}`).classList.add('text-brand-textSub');
@@ -440,7 +459,6 @@
                 document.getElementById(`tab-${t}-text`).classList.remove('text-brand-dark');
             });
 
-            // 設定目標標籤為活躍狀態 (深色與粗體)
             document.getElementById(`tab-${tab}`).classList.add('text-brand-dark', 'font-bold');
             document.getElementById(`tab-${tab}`).classList.remove('text-brand-textSub');
             document.getElementById(`tab-${tab}-icon`).classList.add('text-brand-dark');
@@ -463,9 +481,9 @@
                 homeHeader.classList.add('hidden');
                 statsHeader.classList.remove('hidden');
                 settingsHeader.classList.add('hidden');
-                headerAddBtn.classList.add('hidden'); // 隱藏+號
+                headerAddBtn.classList.add('hidden');
                 pageTitle.innerText = "統計分析";
-                renderStats(); // 繪製圖表
+                renderStats(); 
             } else if (tab === 'settings') {
                 viewHome.classList.add('hidden');
                 viewStats.classList.add('hidden');
@@ -473,13 +491,12 @@
                 homeHeader.classList.add('hidden');
                 statsHeader.classList.add('hidden');
                 settingsHeader.classList.remove('hidden');
-                headerAddBtn.classList.add('hidden'); // 隱藏+號
+                headerAddBtn.classList.add('hidden');
                 pageTitle.innerText = "設定與管理";
                 renderSettings();
             }
         }
 
-        // ======= 日期輸入切換 =======
         function toggleDateInput() {
             const cycle = document.getElementById('subCycle').value;
             const monthlyGroup = document.getElementById('monthlyDateGroup');
@@ -534,8 +551,21 @@
             });
         }
 
-        // ======= 設定頁面渲染與資料操作 =======
+        // ======= 匯率更新 =======
+        function updateRate(currency, value) {
+            const num = parseFloat(value);
+            if (!isNaN(num) && num > 0) {
+                rates[currency] = num;
+                localStorage.setItem('my_rates', JSON.stringify(rates));
+                renderApp();
+            }
+        }
+
+        // ======= 設定頁面渲染 =======
         function renderSettings() {
+            // 初始化匯率輸入框
+            document.getElementById('rateJPY').value = rates.JPY;
+
             const createListHTML = (items, removeFuncStr) => {
                 let html = '';
                 items.forEach((item, index) => {
@@ -630,7 +660,17 @@
 
             let monthlyTotal = 0;
             subscriptions.forEach(sub => {
-                monthlyTotal += sub.cycle === 'yearly' ? sub.price / 12 : sub.price;
+                let cost = sub.price;
+                const currency = sub.currency || 'TWD'; // 相容舊資料
+                // 幣別轉換
+                if (currency === 'JPY') {
+                    cost = cost * (rates.JPY || 0.21);
+                }
+                // 週期轉換
+                if (sub.cycle === 'yearly') {
+                    cost = cost / 12;
+                }
+                monthlyTotal += cost;
             });
             
             totalEl.innerText = formatMoney(Math.round(monthlyTotal));
@@ -658,8 +698,8 @@
 
                     const dateDisplay = sub.cycle === 'yearly' ? `每年 ${sub.date} 扣款` : `每月 ${sub.date} 日扣款`;
                     const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-1.5 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded leading-none">年付</span>' : '';
+                    const currencyLabel = sub.currency || 'TWD';
 
-                    // 極簡化明細
                     item.innerHTML = `
                         <div class="flex flex-1 items-center gap-3">
                             <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
@@ -673,6 +713,7 @@
                             </div>
                         </div>
                         <div class="text-right flex items-center pl-2 shrink-0">
+                            <span class="text-xs text-brand-textSub mr-1 font-bold">${currencyLabel}</span>
                             <span class="text-[17px] font-bold text-brand-dark leading-none">${sub.price}</span>
                             <i class="fa-solid fa-chevron-right text-brand-textSub text-[12px] ml-2 opacity-50"></i>
                         </div>
@@ -690,10 +731,17 @@
             let annualTotal = 0;
             const categoryMonthlyTotals = {};
 
-            // 統計計算
             subscriptions.forEach(sub => {
-                const yearlyCost = sub.cycle === 'yearly' ? sub.price : sub.price * 12;
-                const monthlyCost = sub.cycle === 'yearly' ? sub.price / 12 : sub.price;
+                let baseMonthlyCost = sub.price;
+                const currency = sub.currency || 'TWD';
+                
+                // 轉為台幣計價
+                if (currency === 'JPY') {
+                    baseMonthlyCost = baseMonthlyCost * (rates.JPY || 0.21);
+                }
+
+                const monthlyCost = sub.cycle === 'yearly' ? baseMonthlyCost / 12 : baseMonthlyCost;
+                const yearlyCost = monthlyCost * 12;
                 
                 annualTotal += yearlyCost;
 
@@ -705,17 +753,14 @@
 
             annualTotalEl.innerText = formatMoney(Math.round(annualTotal));
 
-            // 準備 Chart.js 資料
             const labels = Object.keys(categoryMonthlyTotals);
             const dataValues = Object.values(categoryMonthlyTotals).map(v => Math.round(v));
             const totalMonthlyAmount = dataValues.reduce((a, b) => a + b, 0);
 
-            // 莫蘭迪圖表配色
             const morandiColors = ['#748CAB', '#A2B5CD', '#3E5C76', '#C5D3E8', '#5A7A96', '#8EA4BD', '#2A435D'];
 
-            // 渲染圓餅圖
             const ctx = document.getElementById('categoryChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy(); // 避免重複渲染
+            if (chartInstance) chartInstance.destroy(); 
             
             if(dataValues.length === 0) {
                 categoryListEl.innerHTML = '<p class="text-center text-brand-textSub py-4 text-sm">目前尚無訂閱資料</p>';
@@ -739,7 +784,7 @@
                     maintainAspectRatio: false,
                     cutout: '65%',
                     plugins: {
-                        legend: { display: false }, // 隱藏預設圖例，使用自訂清單
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -753,9 +798,12 @@
                 }
             });
 
-            // 渲染下方自訂分類統計清單
             categoryListEl.innerHTML = '';
-            labels.forEach((label, i) => {
+            // 將佔比排序
+            const sortedIndices = dataValues.map((_, i) => i).sort((a, b) => dataValues[b] - dataValues[a]);
+            
+            sortedIndices.forEach(i => {
+                const label = labels[i];
                 const value = dataValues[i];
                 const pct = totalMonthlyAmount ? Math.round((value / totalMonthlyAmount) * 100) : 0;
                 const color = morandiColors[i % morandiColors.length];
@@ -782,6 +830,7 @@
             const name = document.getElementById('subName').value;
             const price = document.getElementById('subPrice').value;
             const cycle = document.getElementById('subCycle').value;
+            const currency = document.getElementById('subCurrency').value;
             const category = document.getElementById('subCategory').value;
             const channel = document.getElementById('subChannel').value;
             const payment = document.getElementById('subPayment').value;
@@ -801,7 +850,7 @@
             if (name && price && date) {
                 const subData = {
                     id: editId ? editId : Date.now().toString(), 
-                    name: name, price: Number(price), cycle: cycle, date: date, 
+                    name: name, price: Number(price), cycle: cycle, currency: currency, date: date, 
                     category: category, channel: channel, payment: payment, icon: icon
                 };
 
@@ -843,6 +892,7 @@
                 if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
                 if(channels.length > 0) document.getElementById('subChannel').value = channels[0];
                 document.getElementById('subPayment').value = '';
+                document.getElementById('subCurrency').value = 'TWD';
                 
                 document.getElementById('subCycle').value = 'monthly';
                 toggleDateInput();
@@ -859,6 +909,7 @@
             document.getElementById('formModalTitle').innerText = '編輯訂閱';
             document.getElementById('subName').value = sub.name;
             document.getElementById('subPrice').value = sub.price;
+            document.getElementById('subCurrency').value = sub.currency || 'TWD';
             document.getElementById('subCategory').value = sub.category || (categories[0] || '');
             document.getElementById('subChannel').value = sub.channel || (channels[0] || '');
             document.getElementById('subPayment').value = sub.payment || '';
@@ -886,7 +937,19 @@
             currentDetailId = id;
             document.getElementById('detailIcon').className = sub.icon;
             document.getElementById('detailName').innerText = sub.name;
-            document.getElementById('detailPrice').innerText = formatMoney(sub.price);
+            
+            const currency = sub.currency || 'TWD';
+            document.getElementById('detailPrice').innerText = formatMoney(sub.price, currency);
+
+            // 日幣轉換提示
+            const equivEl = document.getElementById('detailTwdEquiv');
+            if (currency === 'JPY') {
+                const twdEquivalent = Math.round(sub.price * (rates.JPY || 0.21));
+                equivEl.innerText = `約合 TWD $${twdEquivalent}`;
+                equivEl.classList.remove('hidden');
+            } else {
+                equivEl.classList.add('hidden');
+            }
             
             const isYearly = sub.cycle === 'yearly';
             document.getElementById('detailDate').innerText = isYearly ? `每年 ${sub.date}` : `每月 ${sub.date} 日`;
@@ -894,10 +957,10 @@
             const badge = document.getElementById('detailCycleBadge');
             if (isYearly) {
                 badge.innerText = '年繳專案';
-                badge.className = 'mt-2 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-primary text-white';
+                badge.className = 'mt-3 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-primary text-white';
             } else {
                 badge.innerText = '月繳專案';
-                badge.className = 'mt-2 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-light text-brand-dark';
+                badge.className = 'mt-3 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-light text-brand-dark';
             }
 
             document.getElementById('detailCategory').innerText = sub.category;
@@ -950,6 +1013,7 @@
             }
         });
 
+        // 拖曳關閉視窗邏輯
         function setupSmoothDragToClose(modalElement, headerElement) {
             let startY = 0;
             let currentY = 0;
