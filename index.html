@@ -49,7 +49,8 @@
 
         .bottom-sheet {
             transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            /* 調整貝茲曲線，讓彈回或關閉的動畫更像彈簧 */
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
         }
         .bottom-sheet.active { transform: translateY(0); }
         .overlay {
@@ -57,9 +58,8 @@
         }
         .overlay.active { opacity: 1; pointer-events: auto; }
 
-        /* 確保選單內圖示列表可捲動 */
         #iconDropdownGrid {
-            overscroll-behavior: contain; /* 防止捲動穿透到背景 */
+            overscroll-behavior: contain;
         }
     </style>
 </head>
@@ -67,8 +67,7 @@
 
     <div class="app-container h-[100dvh] flex flex-col relative overflow-hidden">
         
-        <!-- ================= 1. 絕對置頂區域 (移除陰影) ================= -->
-        <!-- 修正3：移除了 transition-shadow 和動態 shadow-header -->
+        <!-- ================= 1. 絕對置頂區域 ================= -->
         <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-2 z-20 flex flex-col border-b border-transparent">
             <header class="flex justify-between items-center mb-5">
                 <h1 class="text-2xl font-bold tracking-wide text-brand-dark" id="pageTitle">我的訂閱</h1>
@@ -102,10 +101,8 @@
         </div>
 
         <!-- ================= 2. 內容滾動區域 ================= -->
-        <!-- 修正3：移除 onscroll 事件 -->
         <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth">
             
-            <!-- 【首頁：訂閱列表】 -->
             <div id="view-home" class="flex flex-col gap-4">
                 <div id="subListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden hidden mb-6">
                     <div id="subList" class="flex flex-col"></div>
@@ -120,7 +117,6 @@
                 </div>
             </div>
 
-            <!-- 【更多：設定頁面】 -->
             <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
                 <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
                     <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
@@ -177,17 +173,16 @@
         <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px]" onclick="closeAllModals()"></div>
         
         <!-- ================= 4. 表單 Modal (新增/編輯) ================= -->
-        <!-- 修正1：確保 max-h 不會讓捲動失效，使用 overflow-hidden 在外層，overflow-y-auto 在表單區 -->
         <div id="formModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
-            <div class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative">
-                <div class="w-12 h-1.5 bg-brand-light rounded-full mx-auto mb-4"></div>
+            
+            <div id="formModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
+                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
                 <button onclick="closeAllModals()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
-                <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark relative">新增訂閱</h3>
+                <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark relative pointer-events-none">新增訂閱</h3>
             </div>
             
-            <!-- 表單捲動區塊 -->
             <div class="flex-1 overflow-y-auto hide-scrollbar">
                 <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-6 bg-white">
                     <input type="hidden" id="editId" value="">
@@ -202,7 +197,6 @@
                                    class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
                         </div>
                         
-                        <!-- 修正1：加入相對定位與更高層級，確保選單可以點擊與捲動 -->
                         <div id="iconDropdown" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-brand-light rounded-[16px] p-3 shadow-header z-30">
                             <p class="text-xs text-brand-textSub mb-2 font-medium">選擇圖示：</p>
                             <div class="grid grid-cols-6 gap-2 max-h-[150px] overflow-y-auto hide-scrollbar" id="iconDropdownGrid"></div>
@@ -210,7 +204,6 @@
                         <input type="hidden" id="subIcon" value="fa-brands fa-youtube">
                     </div>
                     
-                    <!-- 修正4：加入週期選擇與動態扣款日期 -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款週期</label>
@@ -228,7 +221,6 @@
 
                     <div id="dateInputContainer">
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款日期</label>
-                        <!-- 月付輸入介面 -->
                         <div id="monthlyDateGroup" class="flex items-center bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all">
                             <span class="text-brand-textSub mr-2 whitespace-nowrap text-sm font-medium">每月</span>
                             <input type="number" id="subDateDay" required min="1" max="31" placeholder="15" 
@@ -236,7 +228,6 @@
                             <span class="text-brand-textSub ml-2 whitespace-nowrap text-sm font-medium">日</span>
                         </div>
                         
-                        <!-- 年付輸入介面 (預設隱藏) -->
                         <div id="yearlyDateGroup" class="hidden items-center bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all gap-2">
                             <span class="text-brand-textSub whitespace-nowrap text-sm font-medium shrink-0">每年</span>
                             <input type="number" id="subDateMonthYearly" min="1" max="12" placeholder="12" 
@@ -278,12 +269,13 @@
 
         <!-- ================= 5. 訂閱詳細資訊 Modal ================= -->
         <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-brand-bg rounded-t-[32px] flex flex-col max-h-[85dvh] max-w-[480px] mx-auto shadow-float">
-            <div class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] relative">
-                <div class="w-12 h-1.5 bg-brand-light rounded-full mx-auto mb-4"></div>
-                <button onclick="closeAllModals()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors">
+            
+            <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] relative cursor-grab active:cursor-grabbing touch-none">
+                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+                <button onclick="closeAllModals()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
                     <i class="fa-solid fa-chevron-down text-xl"></i>
                 </button>
-                <h3 class="text-xl font-bold text-center text-brand-dark">訂閱詳細資訊</h3>
+                <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">訂閱詳細資訊</h3>
             </div>
             
             <div class="flex-1 overflow-y-auto px-6 py-8 hide-scrollbar bg-white rounded-b-[32px] flex flex-col pb-[env(safe-area-inset-bottom,32px)]">
@@ -293,7 +285,6 @@
                     </div>
                     <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
                     <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
-                    <!-- 顯示年付或月付標籤 -->
                     <span id="detailCycleBadge" class="mt-2 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
                 </div>
 
@@ -319,7 +310,6 @@
                     </div>
                 </div>
 
-                <!-- 修正2：編輯與刪除按鈕並列 -->
                 <div class="mt-auto flex gap-3">
                     <button onclick="triggerDeleteFromDetail()" class="w-14 shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
                         <i class="fa-solid fa-trash-can"></i>
@@ -393,7 +383,6 @@
             }
         }
 
-        // 修正4：切換月付/年付介面
         function toggleDateInput() {
             const cycle = document.getElementById('subCycle').value;
             const monthlyGroup = document.getElementById('monthlyDateGroup');
@@ -530,12 +519,9 @@
             const totalEl = document.getElementById('totalAmount');
             const countEl = document.getElementById('subCount');
 
-            // 修正4：精確計算每月平均花費 (年付除以12)
             const monthlyTotal = subscriptions.reduce((sum, sub) => {
                 let costPerMonth = sub.price;
-                if (sub.cycle === 'yearly') {
-                    costPerMonth = sub.price / 12;
-                }
+                if (sub.cycle === 'yearly') costPerMonth = sub.price / 12;
                 return sum + costPerMonth;
             }, 0);
             
@@ -553,7 +539,6 @@
                 listContainer.classList.remove('hidden');
                 emptyEl.style.display = 'none';
                 
-                // 排序邏輯調整：統一將日/月轉換為便於比較的數字
                 subscriptions.sort((a, b) => {
                     let dateA = a.cycle === 'yearly' ? parseInt(a.date.split('/')[0]) * 100 + parseInt(a.date.split('/')[1]) : parseInt(a.date);
                     let dateB = b.cycle === 'yearly' ? parseInt(b.date.split('/')[0]) * 100 + parseInt(b.date.split('/')[1]) : parseInt(b.date);
@@ -564,7 +549,6 @@
                     item.onclick = () => openDetailModal(sub.id);
 
                     const paymentText = sub.payment ? sub.payment : '未設定扣款';
-                    // 根據週期顯示日期格式與標籤
                     const dateDisplay = sub.cycle === 'yearly' ? `每年 ${sub.date} 扣款` : `每月 ${sub.date} 日扣款`;
                     const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-2 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded">年付</span>' : '';
 
@@ -592,7 +576,6 @@
             }
         }
 
-        // 修正2：整合新增與編輯儲存邏輯
         function handleSave(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
@@ -604,12 +587,11 @@
             const payment = document.getElementById('subPayment').value;
             const icon = document.getElementById('subIcon').value;
 
-            // 處理日期格式
             let date = '';
             if (cycle === 'yearly') {
                 const month = document.getElementById('subDateMonthYearly').value;
                 const day = document.getElementById('subDateDayYearly').value;
-                if (!month || !day) return; // 簡單阻擋空值
+                if (!month || !day) return; 
                 date = `${month}/${day}`;
             } else {
                 date = document.getElementById('subDateDay').value;
@@ -619,22 +601,14 @@
             if (name && price && date) {
                 const subData = {
                     id: editId ? editId : Date.now().toString(), 
-                    name: name, 
-                    price: Number(price), 
-                    cycle: cycle, // 加入週期屬性
-                    date: date, // 字串格式，相容 "15" 或 "12/25"
-                    category: category, 
-                    channel: channel, 
-                    payment: payment, 
-                    icon: icon
+                    name: name, price: Number(price), cycle: cycle, date: date, 
+                    category: category, channel: channel, payment: payment, icon: icon
                 };
 
                 if (editId) {
-                    // 編輯模式
                     const index = subscriptions.findIndex(s => s.id === editId);
                     if (index !== -1) subscriptions[index] = subData;
                 } else {
-                    // 新增模式
                     subscriptions.push(subData);
                 }
 
@@ -648,14 +622,16 @@
         const detailModal = document.getElementById('detailModal');
         const deleteModal = document.getElementById('deleteModal');
         const deleteModalContent = document.getElementById('deleteModalContent');
+        const mainScroll = document.getElementById('mainScroll');
 
         function openFormModal(isEdit = false) {
             document.getElementById('iconDropdown').classList.add('hidden');
             formModal.classList.add('active');
             overlay.classList.add('active');
             
+            mainScroll.style.overflowY = 'hidden';
+            
             if(!isEdit) {
-                // 新增模式：清空表單
                 document.getElementById('saveForm').reset();
                 document.getElementById('editId').value = '';
                 document.getElementById('formModalTitle').innerText = '新增訂閱';
@@ -665,21 +641,17 @@
                 document.getElementById('subIcon').value = currentIcon;
                 if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
                 
-                // 重置週期 UI
                 document.getElementById('subCycle').value = 'monthly';
                 toggleDateInput();
             }
         }
 
-        // 修正2：開啟編輯表單並帶入資料
         function openEditForm() {
             const sub = subscriptions.find(s => s.id === currentDetailId);
             if(!sub) return;
 
-            // 先關閉詳細視窗，保留 overlay
             detailModal.classList.remove('active');
             
-            // 填入舊資料
             document.getElementById('editId').value = sub.id;
             document.getElementById('formModalTitle').innerText = '編輯訂閱';
             document.getElementById('subName').value = sub.name;
@@ -690,8 +662,7 @@
             document.getElementById('subIcon').value = sub.icon;
             document.getElementById('currentIconDisplay').className = sub.icon;
             
-            // 處理週期與日期回填
-            document.getElementById('subCycle').value = sub.cycle || 'monthly'; // 防呆舊資料
+            document.getElementById('subCycle').value = sub.cycle || 'monthly';
             toggleDateInput();
             
             if (sub.cycle === 'yearly') {
@@ -702,7 +673,6 @@
                 document.getElementById('subDateDay').value = sub.date;
             }
 
-            // 打開編輯表單
             setTimeout(() => { formModal.classList.add('active'); }, 100);
         }
 
@@ -715,7 +685,6 @@
             document.getElementById('detailName').innerText = sub.name;
             document.getElementById('detailPrice').innerText = formatMoney(sub.price);
             
-            // 根據週期顯示詳細資訊
             const isYearly = sub.cycle === 'yearly';
             document.getElementById('detailDate').innerText = isYearly ? `每年 ${sub.date}` : `每月 ${sub.date} 日`;
             
@@ -732,6 +701,8 @@
             document.getElementById('detailChannel').innerText = sub.channel;
             document.getElementById('detailPayment').innerText = sub.payment || '尚未設定';
 
+            mainScroll.style.overflowY = 'hidden';
+
             detailModal.classList.add('active');
             overlay.classList.add('active');
         }
@@ -742,6 +713,12 @@
             overlay.classList.remove('active');
             document.getElementById('iconDropdown').classList.add('hidden');
             currentDetailId = null;
+
+            setTimeout(() => {
+                mainScroll.style.overflowY = 'auto';
+                formModal.style.transform = '';
+                detailModal.style.transform = '';
+            }, 300);
         }
 
         function triggerDeleteFromDetail() {
@@ -768,6 +745,83 @@
                 document.getElementById('iconDropdown').classList.add('hidden');
             }
         });
+
+        // ====== 專業級 60fps 絲滑拖曳引擎 ======
+        function setupSmoothDragToClose(modalElement, headerElement) {
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+            let velocity = 0;
+            let lastY = 0;
+            let lastTime = 0;
+            let animationFrameId = null;
+
+            headerElement.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                lastY = startY;
+                lastTime = Date.now();
+                isDragging = true;
+                
+                // 1. 取消 CSS 動畫交由 JS 接管，並開啟硬體加速 (GPU) 消除起步延遲
+                modalElement.style.transition = 'none'; 
+                modalElement.style.willChange = 'transform';
+                
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            }, { passive: true });
+
+            headerElement.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                
+                // 2. 計算滑動瞬間的「速度 (Velocity)」
+                const now = Date.now();
+                const timeDelta = now - lastTime;
+                if (timeDelta > 0) {
+                    velocity = (currentY - lastY) / timeDelta;
+                }
+                lastY = currentY;
+                lastTime = now;
+                
+                if (deltaY > 0) {
+                    // 3. 使用 requestAnimationFrame 同步螢幕刷新率 (防止掉幀卡頓)
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    animationFrameId = requestAnimationFrame(() => {
+                        modalElement.style.transform = `translateY(${deltaY}px)`;
+                    });
+                    
+                    if(e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+
+            const handleEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                
+                // 恢復彈性動畫與關閉硬體加速
+                modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)';
+                modalElement.style.willChange = 'auto';
+
+                const deltaY = currentY - startY;
+                
+                // 4. 判斷邏輯升級：拉動超過 100px，或「快速往下輕滑 (Flick, 速度 > 0.6)」都會關閉
+                if (deltaY > 100 || velocity > 0.6) {
+                    closeAllModals();
+                } else {
+                    // 沒達標則優雅彈回
+                    modalElement.style.transform = '';
+                }
+                velocity = 0;
+            };
+
+            headerElement.addEventListener('touchend', handleEnd);
+            headerElement.addEventListener('touchcancel', handleEnd);
+        }
+
+        setupSmoothDragToClose(formModal, document.getElementById('formModalHeader'));
+        setupSmoothDragToClose(detailModal, document.getElementById('detailModalHeader'));
 
         renderApp();
     </script>
