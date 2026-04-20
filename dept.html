@@ -23,7 +23,8 @@
                             textMain: '#2C3E50',
                             textSub: '#8796A5',
                             lend: '#6B9080',    
-                            borrow: '#D5896F'   
+                            borrow: '#D5896F',
+                            cardDark: '#5F7184' 
                         }
                     },
                     boxShadow: {
@@ -38,7 +39,6 @@
         body {
             background-color: #E2E8F0;
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none;
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -47,6 +47,7 @@
             max-width: 480px;
             margin: 0 auto;
             background-color: #F2F5F8;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
         }
 
         .bottom-sheet {
@@ -54,19 +55,18 @@
             transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
         }
         .bottom-sheet.active { transform: translateY(0); }
+        
         .overlay {
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .overlay.active { opacity: 1; pointer-events: auto; }
 
+        .smooth-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+
         input[type="date"]::-webkit-calendar-picker-indicator {
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: pointer;
+            opacity: 0; width: 100%; height: 100%; position: absolute; top: 0; left: 0; cursor: pointer;
         }
     </style>
 </head>
@@ -75,31 +75,39 @@
     <div class="app-container h-[100dvh] flex flex-col relative overflow-hidden">
         
         <!-- ================= 1. 絕對置頂區域 ================= -->
-        <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-0 z-20 flex flex-col border-b border-transparent">
+        <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-0 z-20 flex flex-col">
             <header class="flex justify-between items-center mb-5">
                 <h1 class="text-2xl font-bold tracking-wide text-brand-dark">借貸管理</h1>
-                <button onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0 relative">
+                <button id="headerAddBtn" onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0 relative">
                     <i class="fa-solid fa-plus text-lg"></i>
                 </button>
             </header>
 
-            <div id="homeHeaderContent" class="flex flex-col gap-5">
-                <div class="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory gap-3 mb-2 -mx-5 px-5 pt-1 pb-4">
-                    <div class="w-[85%] shrink-0 snap-center bg-gradient-to-br from-[#5C7186] to-[#3A4D60] rounded-[24px] p-6 shadow-[0_10px_25px_rgba(58,77,96,0.25)] relative overflow-hidden text-white border border-white/10">
-                        <i class="fa-solid fa-arrow-up-right-from-square absolute -right-4 -bottom-6 text-8xl text-white/5 pointer-events-none"></i>
-                        <div class="text-sm font-medium text-white/80 mb-2 flex items-center gap-2 relative z-10">
-                            <i class="fa-regular fa-calendar-days"></i> 總應收 (別人欠我)
+            <div id="homeHeaderContent" class="flex flex-col gap-4">
+                <div class="relative w-full">
+                    <div id="dashboardCarousel" class="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory smooth-scroll w-full">
+                        <div class="w-full shrink-0 snap-center bg-brand-cardDark rounded-[20px] p-6 shadow-[0_8px_20px_rgba(95,113,132,0.25)] relative overflow-hidden text-white border border-white/5">
+                            <i class="fa-solid fa-arrow-up-right-from-square absolute -right-4 -bottom-6 text-[100px] text-white/5 pointer-events-none"></i>
+                            <div class="text-[13px] font-medium text-white/80 mb-2 flex items-center gap-1.5 relative z-10">
+                                <i class="fa-regular fa-calendar-days text-white/70"></i> 總應收 (別人欠我)
+                            </div>
+                            <div class="text-[36px] font-bold tracking-tight mb-3 relative z-10" id="totalLend">$0</div>
+                            <div class="text-[11px] text-white/60 relative z-10">基於目前所有未結清應收款項進行推算</div>
                         </div>
-                        <div class="text-4xl font-bold tracking-tight mb-4 relative z-10" id="totalLend">$0</div>
-                        <div class="text-[11px] text-white/60 relative z-10">基於目前所有未結清應收款項進行推算</div>
+
+                        <div class="w-full shrink-0 snap-center bg-brand-cardDark rounded-[20px] p-6 shadow-[0_8px_20px_rgba(95,113,132,0.25)] relative overflow-hidden text-white border border-white/5">
+                            <i class="fa-solid fa-arrow-right-to-bracket absolute -right-4 -bottom-6 text-[100px] text-white/5 pointer-events-none"></i>
+                            <div class="text-[13px] font-medium text-white/80 mb-2 flex items-center gap-1.5 relative z-10">
+                                <i class="fa-regular fa-calendar-days text-white/70"></i> 總應付 (我欠別人)
+                            </div>
+                            <div class="text-[36px] font-bold tracking-tight mb-3 relative z-10" id="totalBorrow">$0</div>
+                            <div class="text-[11px] text-white/60 relative z-10">基於目前所有未結清應付款項進行推算</div>
+                        </div>
                     </div>
-                    <div class="w-[85%] shrink-0 snap-center bg-gradient-to-br from-[#6A5A5A] to-[#4A3C3C] rounded-[24px] p-6 shadow-[0_10px_25px_rgba(74,60,60,0.2)] relative overflow-hidden text-white border border-white/10">
-                        <i class="fa-solid fa-arrow-right-to-bracket absolute -right-4 -bottom-6 text-8xl text-white/5 pointer-events-none"></i>
-                        <div class="text-sm font-medium text-white/80 mb-2 flex items-center gap-2 relative z-10">
-                            <i class="fa-regular fa-calendar-days"></i> 總應付 (我欠別人)
-                        </div>
-                        <div class="text-4xl font-bold tracking-tight mb-4 relative z-10" id="totalBorrow">$0</div>
-                        <div class="text-[11px] text-white/60 relative z-10">基於目前所有未結清應付款項進行推算</div>
+
+                    <div class="flex justify-center gap-1.5 mt-3 mb-2">
+                        <div id="dot-lend" class="w-4 h-1.5 rounded-full bg-brand-dark transition-all duration-300"></div>
+                        <div id="dot-borrow" class="w-1.5 h-1.5 rounded-full bg-brand-textSub/30 transition-all duration-300"></div>
                     </div>
                 </div>
 
@@ -111,12 +119,12 @@
             </div>
 
             <div id="settingsHeaderContent" class="hidden pb-2 pt-2">
-                <p class="text-brand-textSub text-sm">管理你的下拉選單選項，自訂銀行與分類。</p>
+                <p class="text-brand-textSub text-sm">管理你的下拉選單選項，自訂往來銀行帳戶。</p>
             </div>
         </div>
 
         <!-- ================= 2. 內容滾動區域 ================= -->
-        <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth">
+        <main id="mainScroll" class="flex-1 min-h-0 overflow-y-auto px-5 pt-2 pb-8 hide-scrollbar smooth-scroll">
             
             <div id="view-home" class="flex flex-col gap-4">
                 <div id="contactListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden mb-6 hidden">
@@ -145,248 +153,240 @@
                         <button onclick="addBank()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
-                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-brand-primary"></i>
-                        <h4 class="font-bold text-brand-dark">分類管理</h4>
-                    </div>
-                    <ul id="settingsCategoryList" class="flex flex-col"></ul>
-                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
-                        <input type="text" id="newCategoryInput" placeholder="新增分類 (例如：餐飲)" 
-                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
-                        <button onclick="addCategory()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
-                    </div>
-                </div>
             </div>
-
         </main>
 
         <!-- ================= 3. 底部導覽列 ================= -->
         <nav class="flex-none w-full bg-white/95 backdrop-blur-md border-t border-brand-light flex justify-around pt-3 pb-[env(safe-area-inset-bottom,20px)] px-2 z-30 text-[10px] text-brand-textSub">
             <div onclick="window.location.href='index.html'" class="hidden nav-btn flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-house text-xl mb-0.5"></i>
-                <span>總覽</span>
+                <i class="fa-solid fa-house text-xl mb-0.5"></i><span>總覽</span>
             </div>
             <div onclick="switchTab('all')" id="nav-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-bold transition-colors">
-                <i class="fa-solid fa-hand-holding-dollar text-xl mb-0.5"></i>
-                <span>借貸</span>
+                <i class="fa-solid fa-hand-holding-dollar text-xl mb-0.5"></i><span>借貸</span>
             </div>
             <div class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-chart-pie text-xl mb-0.5"></i>
-                <span>統計</span>
+                <i class="fa-solid fa-chart-pie text-xl mb-0.5"></i><span>統計</span>
             </div>
             <div onclick="switchView('settings')" id="nav-settings" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-bars text-xl mb-0.5"></i>
-                <span>更多</span>
+                <i class="fa-solid fa-bars text-xl mb-0.5"></i><span>更多</span>
             </div>
         </nav>
+    </div>
 
-        <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px]" onclick="closeAllModals()"></div>
+    <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px] mx-auto max-w-[480px]" onclick="closeAllModals()"></div>
+    
+    <!-- ================= 4. 新增/編輯紀錄表單 Modal ================= -->
+    <div id="formModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-[32px] flex flex-col mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]" style="height: 88vh;">
+        <div id="formModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20">
+            <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+            <button onclick="closeFormModal()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark pointer-events-none">新增帳目紀錄</h3>
+        </div>
         
-        <!-- ================= 4. 新增/編輯紀錄表單 Modal ================= -->
-        <div id="formModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
-            <div id="formModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
-                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
-                <button onclick="closeFormModal()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark pointer-events-none">新增帳目紀錄</h3>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
-                <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-5 relative">
-                    <input type="hidden" id="editId" value="">
-                    
-                    <!-- 修正1：客製化高質感下拉選單 -->
-                    <div class="relative z-40">
-                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">款項類型</label>
-                        
-                        <!-- 觸發按鈕 -->
-                        <div id="customTypeSelect" onclick="toggleTypeDropdown()" class="w-full bg-brand-bg border border-transparent hover:border-brand-light rounded-[16px] px-4 py-3 flex items-center justify-between cursor-pointer transition-all">
-                            <div class="flex items-center gap-3" id="selectedTypeDisplay">
-                                <!-- 預設顯示，會由 JS 動態更新 -->
-                                <i class="fa-solid fa-arrow-up-right-from-square text-brand-lend w-5 text-center"></i>
-                                <span class="font-bold text-[15px] text-brand-dark">我借出 / 代墊 (應收增加)</span>
-                            </div>
-                            <i class="fa-solid fa-caret-down text-brand-textSub transition-transform duration-300" id="typeDropdownIcon"></i>
-                        </div>
-                        
-                        <!-- 隱藏的實際輸入框 -->
-                        <input type="hidden" id="recordType" value="lend">
-
-                        <!-- 客製化選單列表 -->
-                        <div id="typeDropdownMenu" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-brand-light/60 rounded-[16px] shadow-float overflow-hidden flex-col max-h-[280px] overflow-y-auto hide-scrollbar">
-                            <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30">【單純借貸 / 還款】</div>
-                            <div onclick="selectRecordType('lend')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-brand-lend w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">我借錢給對方 (應收增加)</span>
-                            </div>
-                            <div onclick="selectRecordType('borrow')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-arrow-right-to-bracket text-brand-borrow w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">向對方借錢 (應付增加)</span>
-                            </div>
-                            <div onclick="selectRecordType('repay_in')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-hand-holding-dollar text-brand-primary w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">收回借款 (應收減少)</span>
-                            </div>
-                            <div onclick="selectRecordType('repay_out')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-money-bill-transfer text-brand-primary w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">償還欠款 (應付減少)</span>
-                            </div>
-                            
-                            <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30">【消費 / 代墊】</div>
-                            <div onclick="selectRecordType('expense_out')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-utensils text-brand-lend w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">我幫他代墊 (應收增加)</span>
-                            </div>
-                            <div onclick="selectRecordType('expense_in')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-bag-shopping text-brand-borrow w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">他幫我代墊 (應付增加)</span>
-                            </div>
-
-                            <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30">【其他 / 豁免】</div>
-                            <div onclick="selectRecordType('waive_in')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
-                                <i class="fa-solid fa-gift text-brand-textSub w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">我免除他欠款 (請客/爛帳)</span>
-                            </div>
-                            <div onclick="selectRecordType('waive_out')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 transition-colors">
-                                <i class="fa-solid fa-face-smile-wink text-brand-textSub w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">他免除我欠款 (被請客)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 relative z-10">
-                        <div class="col-span-2 relative">
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">對象 (輸入或選擇)</label>
-                            <input type="text" id="recordPerson" required placeholder="例如：王小明" list="personList" autocomplete="off"
-                                   class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
-                            <datalist id="personList"></datalist>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額 (TWD)</label>
-                            <input type="number" id="recordAmount" required min="1" placeholder="1000" 
-                                   class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
-                        </div>
-
-                        <div class="relative">
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">日期</label>
-                            <div class="relative w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all flex items-center">
-                                <input type="date" id="recordDate" required class="bg-transparent border-none outline-none w-full font-bold text-sm text-brand-dark relative z-10">
-                            </div>
-                        </div>
-
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">備註說明 (選填)</label>
-                            <input type="text" id="recordNote" placeholder="例如：一起吃午餐、借款買手機" 
-                                   class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
-                        </div>
-                    </div>
-
-                    <div id="bankFieldsBlock" class="grid grid-cols-2 gap-4 pt-4 border-t border-brand-light/50 mt-1 relative z-0">
-                        <div id="myBankContainer">
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">我方帳戶</label>
-                            <div class="relative">
-                                <select id="myBank" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-sm text-brand-dark appearance-none"></select>
-                                <i class="fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none text-xs"></i>
-                            </div>
-                        </div>
-                        <div id="otherBankContainer">
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">對方帳戶 (選填)</label>
-                            <div class="relative">
-                                <select id="otherBank" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-sm text-brand-dark appearance-none"></select>
-                                <i class="fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="installmentBlock" class="hidden flex-col gap-4 relative z-0">
-                        <div>
-                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">償還方式</label>
-                            <div class="relative">
-                                <select id="repayMethod" onchange="toggleInstallmentInputs()" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-[15px] text-brand-dark appearance-none">
-                                    <option value="single">單次償還</option>
-                                    <option value="installment">分期償還 (含利息設定)</option>
-                                </select>
-                                <i class="fa-solid fa-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none"></i>
-                            </div>
-                        </div>
-
-                        <div id="installmentInputs" class="hidden grid-cols-2 gap-4 bg-brand-bg p-4 rounded-[16px] border border-brand-light/30">
-                            <div>
-                                <label class="block text-xs font-medium text-brand-textSub mb-1.5">分期期數 (月)</label>
-                                <input type="number" id="installMonths" min="1" placeholder="12" 
-                                       class="w-full bg-white border border-transparent rounded-xl px-3 py-2.5 focus:border-brand-primary outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-brand-textSub mb-1.5">年利率 (%)</label>
-                                <input type="number" id="interestRate" step="0.1" min="0" placeholder="5.0" 
-                                       class="w-full bg-white border border-transparent rounded-xl px-3 py-2.5 focus:border-brand-primary outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg">
-                <button type="button" onclick="document.getElementById('saveForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
-                    儲存紀錄
-                </button>
-            </div>
-        </div>
-
-        <!-- ================= 5. 個人明細頁 Modal ================= -->
-        <div id="personDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[50] bg-white rounded-t-[32px] flex flex-col max-h-[95dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
-            <div id="personDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20 shadow-sm">
-                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
-                <button onclick="closePersonDetailModal()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
-                    <i class="fa-solid fa-chevron-down text-xl"></i>
-                </button>
-                <div class="text-center pointer-events-none">
-                    <h3 class="text-lg font-bold text-brand-dark" id="detailPersonName">王小明</h3>
-                    <div class="text-xs text-brand-textSub mt-0.5">往來明細</div>
-                </div>
-            </div>
-            
-            <div id="personDetailScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-brand-bg flex flex-col relative">
+        <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar bg-white smooth-scroll">
+            <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-5 relative">
+                <input type="hidden" id="editId" value="">
                 
-                <!-- 修正2：退回乾淨白色的舊版儀表板 -->
-                <div class="bg-white px-6 py-6 flex flex-col items-center shadow-sm z-10 relative mb-4">
-                    <div id="detailStatusBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-md mb-2"></div>
-                    <div class="text-center text-brand-dark font-bold text-5xl mb-2 tracking-tight" id="detailNetBalance"></div>
-                    <p class="text-xs text-brand-textSub" id="detailStatusText">系統自動計算抵銷後的淨額</p>
+                <div class="relative z-40">
+                    <label class="block text-sm font-medium text-brand-textSub mb-1.5">款項類型</label>
+                    <div id="customTypeSelect" onclick="toggleTypeDropdown()" class="w-full bg-brand-bg border border-transparent hover:border-brand-light rounded-[16px] px-4 py-3 flex items-center justify-between cursor-pointer transition-all">
+                        <div class="flex items-center gap-3" id="selectedTypeDisplay">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-brand-lend w-5 text-center text-lg"></i>
+                            <span class="font-bold text-[15px] text-brand-dark">款項借出</span>
+                        </div>
+                        <i class="fa-solid fa-caret-down text-brand-textSub transition-transform duration-300" id="typeDropdownIcon"></i>
+                    </div>
+                    <input type="hidden" id="recordType" value="lend">
+                    
+                    <div id="typeDropdownMenu" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-brand-light/60 rounded-[16px] shadow-float overflow-hidden flex-col max-h-[280px] overflow-y-auto hide-scrollbar overscroll-contain">
+                        <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30 sticky top-0 backdrop-blur-md">【借貸 / 還款】</div>
+                        <div onclick="selectRecordType('lend')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-brand-lend w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">款項借出</span>
+                        </div>
+                        <div onclick="selectRecordType('borrow')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-arrow-right-to-bracket text-brand-borrow w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">款項借入</span>
+                        </div>
+                        <div onclick="selectRecordType('repay_in')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-hand-holding-dollar text-brand-primary w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">收回款項</span>
+                        </div>
+                        <div onclick="selectRecordType('repay_out')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-money-bill-transfer text-brand-primary w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">償還欠款</span>
+                        </div>
+                        
+                        <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30 sticky top-0 backdrop-blur-md">【消費 / 代墊】</div>
+                        <div onclick="selectRecordType('expense_out')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-utensils text-brand-lend w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">幫他代墊</span>
+                        </div>
+                        <div onclick="selectRecordType('expense_in')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-bag-shopping text-brand-borrow w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">幫我代墊</span>
+                        </div>
+
+                        <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30 sticky top-0 backdrop-blur-md">【其他 / 豁免】</div>
+                        <div onclick="selectRecordType('waive_in_treat')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-gift text-brand-textSub w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">我請客</span>
+                        </div>
+                        <div onclick="selectRecordType('waive_in_bad')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
+                            <i class="fa-solid fa-file-invoice-dollar text-brand-textSub w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">認列爛帳</span>
+                        </div>
+                        <div onclick="selectRecordType('waive_out_treat')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 transition-colors">
+                            <i class="fa-solid fa-face-smile-wink text-brand-textSub w-5 text-center text-lg"></i><span class="font-bold text-[14px] text-brand-dark">他請客 / 免除我欠款</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="px-5 flex-1 flex flex-col">
-                    <div id="historyListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden mb-4">
-                        <div id="historyList" class="flex flex-col"></div>
+                <div class="grid grid-cols-2 gap-4 relative z-30">
+                    <div class="col-span-2 relative">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">對象與圖示</label>
+                        <div class="flex gap-3 relative">
+                            <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light relative overflow-hidden shadow-sm">
+                                <div id="currentIconDisplay" class="flex items-center justify-center w-full h-full"></div>
+                            </button>
+                            <div class="w-full relative">
+                                <input type="text" id="recordPerson" required placeholder="例如：王小明" list="personList" autocomplete="off"
+                                       class="w-full h-full bg-brand-bg border border-transparent rounded-[16px] px-4 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                                <datalist id="personList"></datalist>
+                            </div>
+                        </div>
+                        
+                        <div id="iconDropdown" class="hidden absolute top-[80px] left-0 w-full bg-white border border-brand-light rounded-[16px] p-4 shadow-float z-[100]">
+                            <p class="text-xs text-brand-textSub mb-3 font-medium">選擇專屬圖示：</p>
+                            <div class="grid grid-cols-6 gap-3 max-h-[180px] overflow-y-auto hide-scrollbar smooth-scroll" id="iconDropdownGrid"></div>
+                        </div>
+                        <input type="hidden" id="recordIcon" value="">
                     </div>
                     
-                    <div id="paginationControls" class="flex justify-between items-center px-2 py-2 mb-6 hidden">
-                        <button onclick="changePage(-1)" id="btnPrevPage" class="px-4 py-2 bg-white rounded-full text-sm font-bold text-brand-dark shadow-sm disabled:opacity-30 disabled:shadow-none transition-all">
-                            <i class="fa-solid fa-chevron-left mr-1.5"></i>上一頁
-                        </button>
-                        <span id="pageIndicator" class="text-sm font-bold text-brand-textSub">1 / 1</span>
-                        <button onclick="changePage(1)" id="btnNextPage" class="px-4 py-2 bg-white rounded-full text-sm font-bold text-brand-dark shadow-sm disabled:opacity-30 disabled:shadow-none transition-all">
-                            下一頁<i class="fa-solid fa-chevron-right ml-1.5"></i>
-                        </button>
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額 (TWD)</label>
+                        <input type="number" id="recordAmount" required min="1" placeholder="1000" 
+                               class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">日期</label>
+                        <div class="relative w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all flex items-center">
+                            <input type="date" id="recordDate" required class="bg-transparent border-none outline-none w-full font-bold text-sm text-brand-dark relative z-10">
+                        </div>
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">備註說明 (選填)</label>
+                        <input type="text" id="recordNote" placeholder="例如：一起吃午餐、借款買手機" 
+                               class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
                     </div>
                 </div>
+
+                <div id="bankFieldsBlock" class="grid grid-cols-2 gap-4 pt-4 border-t border-brand-light/50 mt-1 relative z-0">
+                    <div id="myBankContainer">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">我方帳戶</label>
+                        <div class="relative">
+                            <select id="myBank" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-sm text-brand-dark appearance-none"></select>
+                            <i class="fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                    <div id="otherBankContainer">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">對方帳戶 (選填)</label>
+                        <div class="relative">
+                            <select id="otherBank" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-sm text-brand-dark appearance-none"></select>
+                            <i class="fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="installmentBlock" class="hidden flex-col gap-4 relative z-0 pb-10">
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">償還方式</label>
+                        <div class="relative">
+                            <select id="repayMethod" onchange="toggleInstallmentInputs()" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all font-bold text-[15px] text-brand-dark appearance-none">
+                                <option value="single">單次償還</option>
+                                <option value="installment">分期償還 (含利息設定)</option>
+                            </select>
+                            <i class="fa-solid fa-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-brand-textSub pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div id="installmentInputs" class="hidden grid-cols-2 gap-4 bg-brand-bg p-4 rounded-[16px] border border-brand-light/30">
+                        <div>
+                            <label class="block text-xs font-medium text-brand-textSub mb-1.5">分期期數 (月)</label>
+                            <input type="number" id="installMonths" min="1" placeholder="12" 
+                                   class="w-full bg-white border border-transparent rounded-xl px-3 py-2.5 focus:border-brand-primary outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-brand-textSub mb-1.5">年利率 (%)</label>
+                            <input type="number" id="interestRate" step="0.1" min="0" placeholder="5.0" 
+                                   class="w-full bg-white border border-transparent rounded-xl px-3 py-2.5 focus:border-brand-primary outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-brand-dark">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="flex-none px-6 pt-4 pb-[env(safe-area-inset-bottom,24px)] bg-white border-t border-brand-light/40 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+            <button type="button" onclick="document.getElementById('saveForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
+                儲存紀錄
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= 5. 個人明細頁 Modal ================= -->
+    <div id="personDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[50] bg-white rounded-t-[32px] flex flex-col mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]" style="height: 88vh;">
+        
+        <div id="personDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20 shadow-sm">
+            <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+            <button onclick="closePersonDetailModal()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
+                <i class="fa-solid fa-chevron-down text-xl"></i>
+            </button>
+            <div class="text-center pointer-events-none">
+                <h3 class="text-lg font-bold text-brand-dark" id="detailPersonName">王小明</h3>
+                <div class="text-xs text-brand-textSub mt-0.5">往來明細</div>
+            </div>
+        </div>
+        
+        <div id="personDetailScroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain hide-scrollbar bg-brand-bg flex flex-col relative smooth-scroll">
+            <div class="bg-white px-6 py-6 flex flex-col items-center shadow-sm z-10 relative mb-4 shrink-0">
+                <div id="detailStatusBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-md mb-2"></div>
+                <div class="text-center text-brand-dark font-bold text-5xl mb-2 tracking-tight" id="detailNetBalance"></div>
+                <p class="text-xs text-brand-textSub" id="detailStatusText">系統自動計算抵銷後的淨額</p>
             </div>
 
-            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                <button onclick="openFormForPerson()" class="flex-1 bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
-                    <i class="fa-solid fa-plus mr-2"></i>記一筆
-                </button>
+            <div class="px-5 pb-6 flex-1">
+                <div id="historyListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden mb-4">
+                    <div id="historyList" class="flex flex-col"></div>
+                </div>
+                
+                <div id="paginationControls" class="flex justify-between items-center px-2 py-2 hidden shrink-0">
+                    <button onclick="changePage(-1)" id="btnPrevPage" class="px-4 py-2 bg-white rounded-full text-sm font-bold text-brand-dark shadow-sm disabled:opacity-30 disabled:shadow-none transition-all">
+                        <i class="fa-solid fa-chevron-left mr-1.5"></i>上一頁
+                    </button>
+                    <span id="pageIndicator" class="text-sm font-bold text-brand-textSub">1 / 1</span>
+                    <button onclick="changePage(1)" id="btnNextPage" class="px-4 py-2 bg-white rounded-full text-sm font-bold text-brand-dark shadow-sm disabled:opacity-30 disabled:shadow-none transition-all">
+                        下一頁<i class="fa-solid fa-chevron-right ml-1.5"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- ================= 6. 單筆紀錄詳細資訊 Modal ================= -->
-        <div id="recordDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-[32px] flex flex-col max-h-[85dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
-            <div id="recordDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
-                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
-                <button onclick="closeRecordDetailModal()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
-                    <i class="fa-solid fa-chevron-down text-xl"></i>
-                </button>
-                <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">紀錄詳細資訊</h3>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto hide-scrollbar bg-brand-bg px-6 py-8">
-                <div class="flex flex-col items-center mb-8">
+        <div class="flex-none px-6 pt-4 pb-[env(safe-area-inset-bottom,24px)] bg-white border-t border-brand-light/40 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+            <button onclick="openFormForPerson()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
+                <i class="fa-solid fa-plus mr-2"></i>記一筆
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= 6. 單筆紀錄詳細資訊 Modal ================= -->
+    <div id="recordDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-[32px] flex flex-col mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]" style="height: 88vh;">
+        <div id="recordDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20">
+            <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+            <button onclick="closeRecordDetailModal()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
+                <i class="fa-solid fa-chevron-down text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">紀錄詳細資訊</h3>
+        </div>
+        
+        <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar bg-brand-bg smooth-scroll">
+            <div class="px-6 py-8 pb-10">
+                <div class="flex flex-col items-center mb-8 shrink-0">
                     <div id="recDetailIcon" class="w-20 h-20 rounded-[24px] flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
                         <i></i>
                     </div>
@@ -395,20 +395,24 @@
                     <p id="recDetailDate" class="text-sm text-brand-textSub font-medium"></p>
                 </div>
 
-                <div class="bg-white rounded-[20px] p-5 flex flex-col gap-4 shadow-sm border border-brand-light/40">
+                <div class="bg-white rounded-[20px] p-5 flex flex-col gap-4 shadow-sm border border-brand-light/40 mb-4 shrink-0">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-brand-textSub">對象</span>
                         <span class="text-[15px] font-bold text-brand-dark" id="recDetailPerson"></span>
                     </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">我方帳戶</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailMyBank"></span>
+                    <div id="recMyBankBox">
+                        <div class="w-full h-px bg-brand-light/50 mb-4"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">我方帳戶</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailMyBank"></span>
+                        </div>
                     </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">對方帳戶</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailOtherBank"></span>
+                    <div id="recOtherBankBox">
+                        <div class="w-full h-px bg-brand-light/50 my-4"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">對方帳戶</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailOtherBank"></span>
+                        </div>
                     </div>
                     <div class="w-full h-px bg-brand-light/50"></div>
                     <div class="flex flex-col gap-1">
@@ -432,25 +436,23 @@
                     </div>
                 </div>
             </div>
-
-            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3">
-                <button onclick="triggerDeleteRecord()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-                <button onclick="openEditRecord()" class="flex-1 bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
-                    <i class="fa-solid fa-pen mr-2"></i>編輯紀錄
-                </button>
-            </div>
         </div>
 
+        <div class="flex-none px-6 pt-4 pb-[env(safe-area-inset-bottom,24px)] bg-white border-t border-brand-light/40 flex gap-3 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+            <button onclick="triggerDeleteRecord()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+            <button onclick="openEditRecord()" class="flex-1 bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
+                <i class="fa-solid fa-pen mr-2"></i>編輯紀錄
+            </button>
+        </div>
     </div>
 
     <script>
         let records = JSON.parse(localStorage.getItem('my_ledger_records')) || [];
         let defaultBanks = ['現金', '國泰世華', '台新銀行', '中國信託', 'LINE Pay', '街口支付'];
         let banks = JSON.parse(localStorage.getItem('my_banks')) || defaultBanks;
-        let categories = JSON.parse(localStorage.getItem('my_categories')) || ['餐飲', '交通', '購物', '房租', '其他'];
-
+        
         let currentTab = 'all'; 
         let currentDetailPerson = null;
         let currentRecordId = null;
@@ -459,30 +461,44 @@
         let currentPersonPage = 1;
         let personRecordsCache = [];
 
-        // 格式化功能
         const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(Math.abs(num));
         const getToday = () => new Date().toISOString().split('T')[0];
-        
-        // 修正3：全局日期顯示格式改為 /
         const formatDateDisplay = (dateStr) => dateStr ? dateStr.replace(/-/g, '/') : '';
 
-        // 紀錄類型字典庫 (用於客製化選單)
+        // 內建可選圖示 (無外部 SVG)
+        const availableIcons = [
+            'fa-solid fa-arrow-up-right-from-square', 'fa-solid fa-arrow-right-to-bracket',
+            'fa-solid fa-hand-holding-dollar', 'fa-solid fa-money-bill-transfer',
+            'fa-solid fa-utensils', 'fa-solid fa-bag-shopping', 'fa-solid fa-gift', 
+            'fa-solid fa-face-smile-wink', 'fa-solid fa-file-invoice-dollar',
+            'fa-solid fa-car', 'fa-solid fa-plane', 'fa-solid fa-film', 'fa-solid fa-gamepad',
+            'fa-solid fa-ticket', 'fa-solid fa-music', 'fa-solid fa-house', 
+            'fa-solid fa-mobile-screen', 'fa-solid fa-cart-shopping', 'fa-solid fa-book',
+            'fa-solid fa-mug-hot', 'fa-solid fa-basket-shopping', 'fa-solid fa-shirt'
+        ];
+
         const recordTypesData = {
-            'lend': { icon: 'fa-arrow-up-right-from-square', color: 'text-brand-lend', text: '我借錢給對方 (應收增加)' },
-            'borrow': { icon: 'fa-arrow-right-to-bracket', color: 'text-brand-borrow', text: '向對方借錢 (應付增加)' },
-            'repay_in': { icon: 'fa-hand-holding-dollar', color: 'text-brand-primary', text: '收回借款 (應收減少)' },
-            'repay_out': { icon: 'fa-money-bill-transfer', color: 'text-brand-primary', text: '償還欠款 (應付減少)' },
-            'expense_out': { icon: 'fa-utensils', color: 'text-brand-lend', text: '我幫他代墊 (應收增加)' },
-            'expense_in': { icon: 'fa-bag-shopping', color: 'text-brand-borrow', text: '他幫我代墊 (應付增加)' },
-            'waive_in': { icon: 'fa-gift', color: 'text-brand-textSub', text: '我免除他欠款 (請客/爛帳)' },
-            'waive_out': { icon: 'fa-face-smile-wink', color: 'text-brand-textSub', text: '他免除我欠款 (被請客)' }
+            'lend': { defaultIcon: 'fa-solid fa-arrow-up-right-from-square', color: 'text-brand-lend', text: '款項借出' },
+            'borrow': { defaultIcon: 'fa-solid fa-arrow-right-to-bracket', color: 'text-brand-borrow', text: '款項借入' },
+            'repay_in': { defaultIcon: 'fa-solid fa-hand-holding-dollar', color: 'text-brand-primary', text: '收回款項' },
+            'repay_out': { defaultIcon: 'fa-solid fa-money-bill-transfer', color: 'text-brand-primary', text: '償還欠款' },
+            'expense_out': { defaultIcon: 'fa-solid fa-utensils', color: 'text-brand-lend', text: '幫他代墊' },
+            'expense_in': { defaultIcon: 'fa-solid fa-bag-shopping', color: 'text-brand-borrow', text: '幫我代墊' },
+            'waive_in_treat': { defaultIcon: 'fa-solid fa-gift', color: 'text-brand-textSub', text: '我請客' },
+            'waive_in_bad': { defaultIcon: 'fa-solid fa-file-invoice-dollar', color: 'text-brand-textSub', text: '認列爛帳' },
+            'waive_out_treat': { defaultIcon: 'fa-solid fa-face-smile-wink', color: 'text-brand-textSub', text: '被請客' }
         };
+
+        function getIconHTML(iconVal) {
+            if (!iconVal) return `<i class="fa-solid fa-box-open"></i>`; 
+            return `<i class="${iconVal}"></i>`;
+        }
 
         function calculatePersonBalance(personName) {
             let balance = 0;
             records.filter(r => r.person === personName).forEach(r => {
-                if (['lend', 'repay_out', 'expense_out', 'waive_out'].includes(r.type)) balance += r.amount; 
-                if (['borrow', 'repay_in', 'expense_in', 'waive_in'].includes(r.type)) balance -= r.amount; 
+                if (['lend', 'repay_out', 'expense_out', 'waive_out_treat'].includes(r.type)) balance += r.amount; 
+                if (['borrow', 'repay_in', 'expense_in', 'waive_in_treat', 'waive_in_bad'].includes(r.type)) balance -= r.amount; 
             });
             return balance;
         }
@@ -513,6 +529,7 @@
             const viewSettings = document.getElementById('view-settings');
             const homeHeader = document.getElementById('homeHeaderContent');
             const settingsHeader = document.getElementById('settingsHeaderContent');
+            const headerAddBtn = document.getElementById('headerAddBtn');
             
             document.getElementById('nav-home').classList.remove('text-brand-dark', 'font-bold');
             document.getElementById('nav-home').classList.add('text-brand-textSub');
@@ -524,12 +541,14 @@
                 homeHeader.classList.remove('hidden'); settingsHeader.classList.add('hidden');
                 document.getElementById('nav-home').classList.add('text-brand-dark', 'font-bold');
                 document.getElementById('nav-home').classList.remove('text-brand-textSub');
+                if (headerAddBtn) headerAddBtn.classList.remove('hidden');
                 renderApp();
             } else if (view === 'settings') {
                 viewHome.classList.add('hidden'); viewSettings.classList.remove('hidden');
                 homeHeader.classList.add('hidden'); settingsHeader.classList.remove('hidden');
                 document.getElementById('nav-settings').classList.add('text-brand-dark', 'font-bold');
                 document.getElementById('nav-settings').classList.remove('text-brand-textSub');
+                if (headerAddBtn) headerAddBtn.classList.add('hidden');
                 renderSettings();
             }
         }
@@ -543,6 +562,24 @@
                 else btn.className = "flex-1 py-2 text-sm font-bold rounded-[10px] text-brand-textSub hover:text-brand-dark transition-all";
             });
             renderApp();
+        }
+
+        function setupCarousel() {
+            const carousel = document.getElementById('dashboardCarousel');
+            if (!carousel) return;
+            carousel.addEventListener('scroll', () => {
+                const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+                const dotLend = document.getElementById('dot-lend');
+                const dotBorrow = document.getElementById('dot-borrow');
+                
+                if (index === 0) {
+                    dotLend.className = "w-4 h-1.5 rounded-full bg-brand-dark transition-all duration-300";
+                    dotBorrow.className = "w-1.5 h-1.5 rounded-full bg-brand-textSub/30 transition-all duration-300";
+                } else {
+                    dotLend.className = "w-1.5 h-1.5 rounded-full bg-brand-textSub/30 transition-all duration-300";
+                    dotBorrow.className = "w-4 h-1.5 rounded-full bg-brand-dark transition-all duration-300";
+                }
+            });
         }
 
         function renderApp() {
@@ -622,7 +659,6 @@
                 return html;
             };
             document.getElementById('settingsBankList').innerHTML = createListHTML(banks, 'removeBank');
-            document.getElementById('settingsCategoryList').innerHTML = createListHTML(categories, 'removeCategory');
         }
 
         function addBank() {
@@ -630,11 +666,6 @@
             if (val && !banks.includes(val)) { banks.push(val); localStorage.setItem('my_banks', JSON.stringify(banks)); input.value = ''; renderSettings(); renderBankOptions(); }
         }
         function removeBank(index) { banks.splice(index, 1); localStorage.setItem('my_banks', JSON.stringify(banks)); renderSettings(); renderBankOptions(); }
-        function addCategory() {
-            const input = document.getElementById('newCategoryInput'); const val = input.value.trim();
-            if (val && !categories.includes(val)) { categories.push(val); localStorage.setItem('my_categories', JSON.stringify(categories)); input.value = ''; renderSettings(); }
-        }
-        function removeCategory(index) { categories.splice(index, 1); localStorage.setItem('my_categories', JSON.stringify(categories)); renderSettings(); }
 
         function renderBankOptions() {
             const myBank = document.getElementById('myBank'); const otherBank = document.getElementById('otherBank');
@@ -643,14 +674,6 @@
             if(myBank) myBank.innerHTML = html; if(otherBank) otherBank.innerHTML = html;
         }
 
-        // ================= 表單操作邏輯 =================
-        const overlay = document.getElementById('modalOverlay');
-        const formModal = document.getElementById('formModal');
-        const personDetailModal = document.getElementById('personDetailModal');
-        const recordDetailModal = document.getElementById('recordDetailModal');
-        const mainScroll = document.getElementById('mainScroll');
-
-        // 客製化下拉選單操控
         function toggleTypeDropdown() {
             const menu = document.getElementById('typeDropdownMenu');
             const icon = document.getElementById('typeDropdownIcon');
@@ -665,15 +688,41 @@
             updateCustomDropdownDisplay(typeVal);
             toggleTypeDropdown(); 
             toggleBankAndInstallmentFields();
+            
+            const defaultIcon = recordTypesData[typeVal].defaultIcon;
+            document.getElementById('recordIcon').value = defaultIcon;
+            document.getElementById('currentIconDisplay').innerHTML = getIconHTML(defaultIcon);
         }
 
         function updateCustomDropdownDisplay(typeVal) {
             const data = recordTypesData[typeVal];
             document.getElementById('recordType').value = typeVal;
-            document.getElementById('selectedTypeDisplay').innerHTML = `<i class="fa-solid ${data.icon} ${data.color} w-5 text-center text-lg"></i><span class="font-bold text-[15px] text-brand-dark">${data.text}</span>`;
+            document.getElementById('selectedTypeDisplay').innerHTML = `<i class="${data.defaultIcon} ${data.color} w-5 text-center text-lg"></i><span class="font-bold text-[15px] text-brand-dark">${data.text}</span>`;
         }
 
-        // 點擊外部關閉選單
+        function toggleIconDropdown() {
+            const dropdown = document.getElementById('iconDropdown');
+            if (dropdown.classList.contains('hidden')) { dropdown.classList.remove('hidden'); renderIconDropdown(); } 
+            else { dropdown.classList.add('hidden'); }
+        }
+
+        function renderIconDropdown() {
+            const grid = document.getElementById('iconDropdownGrid');
+            grid.innerHTML = '';
+            availableIcons.forEach(iconVal => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg relative";
+                btn.innerHTML = getIconHTML(iconVal);
+                btn.onclick = () => {
+                    document.getElementById('currentIconDisplay').innerHTML = getIconHTML(iconVal);
+                    document.getElementById('recordIcon').value = iconVal;
+                    document.getElementById('iconDropdown').classList.add('hidden');
+                };
+                grid.appendChild(btn);
+            });
+        }
+
         document.addEventListener('click', (e) => {
             const selectEl = document.getElementById('customTypeSelect');
             const menuEl = document.getElementById('typeDropdownMenu');
@@ -681,7 +730,18 @@
                 menuEl.classList.add('hidden'); menuEl.classList.remove('flex');
                 document.getElementById('typeDropdownIcon')?.classList.remove('rotate-180');
             }
+            
+            const iconDropdown = document.getElementById('iconDropdown');
+            const iconBtn = document.querySelector('button[onclick="toggleIconDropdown()"]');
+            if (iconDropdown && iconBtn && !iconDropdown.contains(e.target) && !iconBtn.contains(e.target)) {
+                iconDropdown.classList.add('hidden');
+            }
         });
+
+        const overlay = document.getElementById('modalOverlay');
+        const formModal = document.getElementById('formModal');
+        const personDetailModal = document.getElementById('personDetailModal');
+        const recordDetailModal = document.getElementById('recordDetailModal');
 
         function toggleBankAndInstallmentFields() {
             const type = document.getElementById('recordType').value;
@@ -725,8 +785,10 @@
             document.getElementById('saveForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formModalTitle').innerText = '新增帳目紀錄'; document.getElementById('recordDate').value = getToday();
             
             updateCustomDropdownDisplay('lend');
-            toggleBankAndInstallmentFields(); toggleInstallmentInputs();
+            document.getElementById('recordIcon').value = recordTypesData['lend'].defaultIcon;
+            document.getElementById('currentIconDisplay').innerHTML = getIconHTML(recordTypesData['lend'].defaultIcon);
             
+            toggleBankAndInstallmentFields(); toggleInstallmentInputs();
             if (prefillPerson) document.getElementById('recordPerson').value = prefillPerson;
         }
 
@@ -742,6 +804,7 @@
             const note = document.getElementById('recordNote').value.trim();
             const myBank = document.getElementById('myBank').value;
             const otherBank = document.getElementById('otherBank').value;
+            const icon = document.getElementById('recordIcon').value;
 
             let repayMethod = 'single'; let installMonths = null; let interestRate = null;
             if (['lend', 'borrow'].includes(type)) {
@@ -750,7 +813,7 @@
             }
 
             if (person && amount && date) {
-                const data = { id: editId ? editId : Date.now().toString(), type, person, amount, date, note, myBank, otherBank, repayMethod, installMonths, interestRate };
+                const data = { id: editId ? editId : Date.now().toString(), type, person, amount, date, note, myBank, otherBank, repayMethod, installMonths, interestRate, icon };
                 if (editId) { const idx = records.findIndex(r => r.id === editId); if (idx !== -1) records[idx] = data; } 
                 else { records.push(data); }
                 closeFormModal();
@@ -763,20 +826,20 @@
             formModal.classList.remove('active');
             if (recordDetailModal.classList.contains('active')) { overlay.style.zIndex = "55"; } 
             else if (personDetailModal.classList.contains('active')) { overlay.style.zIndex = "45"; } 
-            else { overlay.classList.remove('active'); overlay.style.zIndex = "40"; mainScroll.style.overflowY = 'auto'; }
+            else { overlay.classList.remove('active'); overlay.style.zIndex = "40"; }
             
             const menu = document.getElementById('typeDropdownMenu');
             if(menu) { menu.classList.add('hidden'); menu.classList.remove('flex'); document.getElementById('typeDropdownIcon').classList.remove('rotate-180');}
+            document.getElementById('iconDropdown').classList.add('hidden');
+            setTimeout(() => { formModal.style.transform = ''; }, 300);
         }
 
-        // ================= 個人明細頁 (換頁與渲染) =================
         function openPersonDetailModal(personName) {
             currentDetailPerson = personName; currentPersonPage = 1; 
             const balance = calculatePersonBalance(personName);
             document.getElementById('detailPersonName').innerText = personName; document.getElementById('detailNetBalance').innerText = formatMoney(balance);
             const badgeEl = document.getElementById('detailStatusBadge'); const statusTextEl = document.getElementById('detailStatusText');
 
-            // 修正2：退回白底舊版樣式
             if (balance > 0) { badgeEl.innerText = '目前為 應收 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-[#6B9080]/10 text-brand-lend'; statusTextEl.innerText = `${personName} 總共需要給你`; } 
             else if (balance < 0) { badgeEl.innerText = '目前為 應付 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-[#D5896F]/10 text-brand-borrow'; statusTextEl.innerText = `你總共需要給 ${personName}`; } 
             else { badgeEl.innerText = '無欠款'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-brand-bg text-brand-textSub border border-brand-light'; statusTextEl.innerText = `你與 ${personName} 已經結清囉`; }
@@ -784,7 +847,7 @@
             personRecordsCache = records.filter(r => r.person === personName).sort((a, b) => new Date(b.date) - new Date(a.date));
             document.getElementById('personDetailScroll').scrollTop = 0; renderPersonRecordsList();
 
-            mainScroll.style.overflowY = 'hidden'; overlay.style.zIndex = "45";
+            overlay.style.zIndex = "45";
             personDetailModal.classList.add('active'); overlay.classList.add('active');
         }
 
@@ -801,23 +864,23 @@
 
             pageRecords.forEach(r => {
                 const data = recordTypesData[r.type];
-                let icon = data.icon; let colorClass = data.color; let typeLabel = data.text.split(' ')[0]; // 取前面簡稱
+                let colorClass = data.color; let typeLabel = data.text; 
                 let bgClass = colorClass === 'text-brand-lend' ? 'bg-[#6B9080]/10' : (colorClass === 'text-brand-borrow' ? 'bg-[#D5896F]/10' : (colorClass === 'text-brand-primary' ? 'bg-brand-primary/10' : 'bg-brand-light/30'));
-                let operator = (r.type === 'lend' || r.type === 'repay_out' || r.type === 'expense_out' || r.type === 'waive_out') ? '+' : '-';
+                let operator = (['lend', 'repay_out', 'expense_out', 'waive_out_treat'].includes(r.type)) ? '+' : '-';
+                
+                let iconVal = r.icon || data.defaultIcon;
 
                 const item = document.createElement('div');
                 item.className = "px-5 py-4 border-b border-brand-light/60 last:border-b-0 flex justify-between items-center cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg transition-colors";
                 item.onclick = () => openRecordDetailModal(r.id);
 
                 const installBadge = (r.repayMethod === 'installment') ? `<span class="ml-1.5 text-[10px] bg-brand-bg text-brand-textSub px-1.5 py-0.5 rounded border border-brand-light leading-none">分期</span>` : '';
-
-                // 修正4：移除雙方銀行，把備註放在日期旁邊
                 const noteText = r.note ? r.note : '無備註';
 
                 item.innerHTML = `
                     <div class="flex flex-1 items-center gap-3.5 overflow-hidden">
                         <div class="w-10 h-10 rounded-[12px] ${bgClass} ${colorClass} flex items-center justify-center text-lg shrink-0 border border-brand-light/30">
-                            <i class="fa-solid ${icon}"></i>
+                            ${getIconHTML(iconVal)}
                         </div>
                         <div class="flex flex-col min-w-0">
                             <div class="text-[14px] font-bold text-brand-dark flex items-center leading-tight mb-1 truncate">
@@ -852,30 +915,45 @@
 
         function closePersonDetailModal() {
             personDetailModal.classList.remove('active'); overlay.classList.remove('active'); overlay.style.zIndex = "40"; currentDetailPerson = null;
-            setTimeout(() => { mainScroll.style.overflowY = 'auto'; personDetailModal.style.transform = ''; }, 300);
+            setTimeout(() => { personDetailModal.style.transform = ''; }, 300);
         }
 
-        // ================= 單筆紀錄詳細頁 Modal (z-60) =================
         function openRecordDetailModal(id) {
             const r = records.find(x => x.id === id); if(!r) return;
             currentRecordId = id;
 
             const data = recordTypesData[r.type];
             let bgClass = data.color === 'text-brand-lend' ? 'bg-[#6B9080]/10' : (data.color === 'text-brand-borrow' ? 'bg-[#D5896F]/10' : (data.color === 'text-brand-primary' ? 'bg-brand-primary/10' : 'bg-brand-light/30'));
+            let iconVal = r.icon || data.defaultIcon;
 
             const iconContainer = document.getElementById('recDetailIcon');
-            iconContainer.className = `w-20 h-20 rounded-[24px] flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50 ${data.color} ${bgClass}`;
-            iconContainer.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+            iconContainer.className = `w-20 h-20 rounded-[24px] flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50 ${data.color} ${bgClass} overflow-hidden`;
+            iconContainer.innerHTML = getIconHTML(iconVal);
             
             const typeBadge = document.getElementById('recDetailType');
-            typeBadge.innerText = data.text.split(' ')[0]; // 簡稱
+            typeBadge.innerText = data.text; 
             typeBadge.className = `text-xs font-bold px-2 py-0.5 rounded-md mb-2 ${data.color} ${bgClass}`;
 
             document.getElementById('recDetailAmount').innerText = formatMoney(r.amount);
             document.getElementById('recDetailDate').innerText = `紀錄日期: ${formatDateDisplay(r.date)}`;
             document.getElementById('recDetailPerson').innerText = r.person;
-            document.getElementById('recDetailMyBank').innerText = r.myBank || '未設定';
-            document.getElementById('recDetailOtherBank').innerText = r.otherBank || '未設定';
+            
+            const myBankBox = document.getElementById('recMyBankBox');
+            const otherBankBox = document.getElementById('recOtherBankBox');
+            if (['lend', 'borrow', 'repay_in', 'repay_out'].includes(r.type)) {
+                myBankBox.classList.remove('hidden'); otherBankBox.classList.remove('hidden');
+                document.getElementById('recDetailMyBank').innerText = r.myBank || '未設定';
+                document.getElementById('recDetailOtherBank').innerText = r.otherBank || '未設定';
+            } else if (r.type === 'expense_out') {
+                myBankBox.classList.remove('hidden'); otherBankBox.classList.add('hidden');
+                document.getElementById('recDetailMyBank').innerText = r.myBank || '未設定';
+            } else if (r.type === 'expense_in') {
+                myBankBox.classList.add('hidden'); otherBankBox.classList.remove('hidden');
+                document.getElementById('recDetailOtherBank').innerText = r.otherBank || '未設定';
+            } else {
+                myBankBox.classList.add('hidden'); otherBankBox.classList.add('hidden');
+            }
+
             document.getElementById('recDetailNote').innerText = r.note || '無';
 
             const installBlock = document.getElementById('recInstallmentBlock');
@@ -889,6 +967,7 @@
 
         function closeRecordDetailModal() {
             recordDetailModal.classList.remove('active'); overlay.style.zIndex = "45"; currentRecordId = null;
+            setTimeout(() => { recordDetailModal.style.transform = ''; }, 300);
         }
 
         function openEditRecord() {
@@ -901,6 +980,10 @@
             document.getElementById('recordNote').value = r.note || '';
             
             updateCustomDropdownDisplay(r.type);
+            const iconVal = r.icon || recordTypesData[r.type].defaultIcon;
+            document.getElementById('recordIcon').value = iconVal;
+            document.getElementById('currentIconDisplay').innerHTML = getIconHTML(iconVal);
+
             toggleBankAndInstallmentFields();
             
             if (!document.getElementById('myBankContainer').classList.contains('hidden')) document.getElementById('myBank').value = r.myBank || '';
@@ -942,9 +1025,14 @@
             const handleEnd = () => {
                 if (!isDragging) return; isDragging = false;
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)'; modalElement.style.willChange = 'auto';
+                modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)'; 
+                modalElement.style.willChange = 'auto';
                 const deltaY = currentY - startY;
-                if (deltaY > 100 || velocity > 0.6) closeCallback(); else modalElement.style.transform = '';
+                
+                // 核心修復：強制清除殘留的 Inline Transform，讓 CSS Class 接手歸位
+                modalElement.style.transform = '';
+                
+                if (deltaY > 100 || velocity > 0.6) closeCallback();
                 velocity = 0;
             };
             headerElement.addEventListener('touchend', handleEnd); headerElement.addEventListener('touchcancel', handleEnd);
@@ -954,6 +1042,8 @@
         setupSmoothDragToClose(personDetailModal, document.getElementById('personDetailHeader'), closePersonDetailModal);
         setupSmoothDragToClose(recordDetailModal, document.getElementById('recordDetailHeader'), closeRecordDetailModal);
 
+        // 初始化
+        setupCarousel();
         renderApp();
     </script>
 </body>
