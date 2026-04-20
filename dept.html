@@ -159,16 +159,20 @@
         <!-- ================= 3. 底部導覽列 ================= -->
         <nav class="flex-none w-full bg-white/95 backdrop-blur-md border-t border-brand-light flex justify-around pt-3 pb-[env(safe-area-inset-bottom,20px)] px-2 z-30 text-[10px] text-brand-textSub">
             <div onclick="window.location.href='index.html'" class="hidden nav-btn flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-house text-xl mb-0.5"></i><span>總覽</span>
+                <i class="fa-solid fa-house text-xl mb-0.5"></i>
+                <span>總覽</span>
             </div>
             <div onclick="switchTab('all')" id="nav-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-bold transition-colors">
-                <i class="fa-solid fa-hand-holding-dollar text-xl mb-0.5"></i><span>借貸</span>
+                <i class="fa-solid fa-hand-holding-dollar text-xl mb-0.5"></i>
+                <span>借貸</span>
             </div>
             <div class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-chart-pie text-xl mb-0.5"></i><span>統計</span>
+                <i class="fa-solid fa-chart-pie text-xl mb-0.5"></i>
+                <span>統計</span>
             </div>
             <div onclick="switchView('settings')" id="nav-settings" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
-                <i class="fa-solid fa-bars text-xl mb-0.5"></i><span>更多</span>
+                <i class="fa-solid fa-bars text-xl mb-0.5"></i>
+                <span>更多</span>
             </div>
         </nav>
     </div>
@@ -198,8 +202,9 @@
                         </div>
                         <i class="fa-solid fa-caret-down text-brand-textSub transition-transform duration-300" id="typeDropdownIcon"></i>
                     </div>
-                    <input type="hidden" id="recordType" value="lend">
                     
+                    <input type="hidden" id="recordType" value="lend">
+
                     <div id="typeDropdownMenu" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-brand-light/60 rounded-[16px] shadow-float overflow-hidden flex-col max-h-[280px] overflow-y-auto hide-scrollbar overscroll-contain">
                         <div class="px-4 py-2 text-[11px] font-bold text-brand-textSub bg-brand-bg/80 border-b border-brand-light/30 sticky top-0 backdrop-blur-md">【借貸 / 還款】</div>
                         <div onclick="selectRecordType('lend')" class="px-4 py-3 hover:bg-brand-bg cursor-pointer flex items-center gap-3 border-b border-brand-light/30 transition-colors">
@@ -294,7 +299,7 @@
                     </div>
                 </div>
 
-                <div id="installmentBlock" class="hidden flex-col gap-4 relative z-0 pb-10">
+                <div id="installmentBlock" class="hidden flex-col gap-4 relative z-0 pb-6">
                     <div>
                         <label class="block text-sm font-medium text-brand-textSub mb-1.5">償還方式</label>
                         <div class="relative">
@@ -330,7 +335,7 @@
     </div>
 
     <!-- ================= 5. 個人明細頁 Modal ================= -->
-    <div id="personDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[50] bg-white rounded-t-[32px] flex flex-col mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]" style="height: 88vh;">
+    <div id="personDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[50] bg-white rounded-t-[32px] flex flex-col h-[90dvh] mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         
         <div id="personDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20 shadow-sm">
             <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
@@ -375,7 +380,7 @@
     </div>
 
     <!-- ================= 6. 單筆紀錄詳細資訊 Modal ================= -->
-    <div id="recordDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-[32px] flex flex-col mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]" style="height: 88vh;">
+    <div id="recordDetailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-[32px] flex flex-col h-[85dvh] mx-auto max-w-[480px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div id="recordDetailHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none z-20">
             <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
             <button onclick="closeRecordDetailModal()" class="absolute left-4 top-4 w-10 h-10 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors z-10">
@@ -384,55 +389,53 @@
             <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">紀錄詳細資訊</h3>
         </div>
         
-        <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar bg-brand-bg smooth-scroll">
-            <div class="px-6 py-8 pb-10">
-                <div class="flex flex-col items-center mb-8 shrink-0">
-                    <div id="recDetailIcon" class="w-20 h-20 rounded-[24px] flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
-                        <i></i>
-                    </div>
-                    <div id="recDetailType" class="text-xs font-bold px-2 py-0.5 rounded-md mb-2"></div>
-                    <h2 id="recDetailAmount" class="text-4xl font-bold text-brand-dark tracking-tight mb-2"></h2>
-                    <p id="recDetailDate" class="text-sm text-brand-textSub font-medium"></p>
+        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain hide-scrollbar bg-brand-bg px-6 py-8 smooth-scroll">
+            <div class="flex flex-col items-center mb-8 shrink-0">
+                <div id="recDetailIcon" class="w-20 h-20 rounded-[24px] flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50">
+                    <i></i>
                 </div>
+                <div id="recDetailType" class="text-xs font-bold px-2 py-0.5 rounded-md mb-2"></div>
+                <h2 id="recDetailAmount" class="text-4xl font-bold text-brand-dark tracking-tight mb-2"></h2>
+                <p id="recDetailDate" class="text-sm text-brand-textSub font-medium"></p>
+            </div>
 
-                <div class="bg-white rounded-[20px] p-5 flex flex-col gap-4 shadow-sm border border-brand-light/40 mb-4 shrink-0">
+            <div class="bg-white rounded-[20px] p-5 flex flex-col gap-4 shadow-sm border border-brand-light/40 mb-6 shrink-0">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-brand-textSub">對象</span>
+                    <span class="text-[15px] font-bold text-brand-dark" id="recDetailPerson"></span>
+                </div>
+                <div id="recMyBankBox">
+                    <div class="w-full h-px bg-brand-light/50 mb-4"></div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-brand-textSub">對象</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailPerson"></span>
+                        <span class="text-sm font-medium text-brand-textSub">我方帳戶</span>
+                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailMyBank"></span>
                     </div>
-                    <div id="recMyBankBox">
-                        <div class="w-full h-px bg-brand-light/50 mb-4"></div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-brand-textSub">我方帳戶</span>
-                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailMyBank"></span>
-                        </div>
+                </div>
+                <div id="recOtherBankBox">
+                    <div class="w-full h-px bg-brand-light/50 my-4"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub">對方帳戶</span>
+                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailOtherBank"></span>
                     </div>
-                    <div id="recOtherBankBox">
-                        <div class="w-full h-px bg-brand-light/50 my-4"></div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-brand-textSub">對方帳戶</span>
-                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailOtherBank"></span>
-                        </div>
+                </div>
+                <div class="w-full h-px bg-brand-light/50"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm font-medium text-brand-textSub">備註說明</span>
+                    <span class="text-[15px] font-bold text-brand-dark" id="recDetailNote"></span>
+                </div>
+                
+                <div id="recInstallmentBlock" class="hidden flex-col gap-4 border-t border-brand-light/50 pt-4 mt-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub">償還方式</span>
+                        <span class="text-[15px] font-bold text-brand-dark bg-brand-bg px-2 py-0.5 rounded-md">分期償還</span>
                     </div>
-                    <div class="w-full h-px bg-brand-light/50"></div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-sm font-medium text-brand-textSub">備註說明</span>
-                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailNote"></span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub">分期期數</span>
+                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailMonths"></span>
                     </div>
-                    
-                    <div id="recInstallmentBlock" class="hidden flex-col gap-4 border-t border-brand-light/50 pt-4 mt-2">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-brand-textSub">償還方式</span>
-                            <span class="text-[15px] font-bold text-brand-dark bg-brand-bg px-2 py-0.5 rounded-md">分期償還</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-brand-textSub">分期期數</span>
-                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailMonths"></span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-brand-textSub">約定年利率</span>
-                            <span class="text-[15px] font-bold text-brand-dark" id="recDetailInterest"></span>
-                        </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub">約定年利率</span>
+                        <span class="text-[15px] font-bold text-brand-dark" id="recDetailInterest"></span>
                     </div>
                 </div>
             </div>
@@ -465,7 +468,6 @@
         const getToday = () => new Date().toISOString().split('T')[0];
         const formatDateDisplay = (dateStr) => dateStr ? dateStr.replace(/-/g, '/') : '';
 
-        // 內建可選圖示 (無外部 SVG)
         const availableIcons = [
             'fa-solid fa-arrow-up-right-from-square', 'fa-solid fa-arrow-right-to-bracket',
             'fa-solid fa-hand-holding-dollar', 'fa-solid fa-money-bill-transfer',
@@ -477,6 +479,7 @@
             'fa-solid fa-mug-hot', 'fa-solid fa-basket-shopping', 'fa-solid fa-shirt'
         ];
 
+        // 🌟 修正1：加入防呆相容舊資料 (解決舊版圖示卡死 Bug)
         const recordTypesData = {
             'lend': { defaultIcon: 'fa-solid fa-arrow-up-right-from-square', color: 'text-brand-lend', text: '款項借出' },
             'borrow': { defaultIcon: 'fa-solid fa-arrow-right-to-bracket', color: 'text-brand-borrow', text: '款項借入' },
@@ -486,7 +489,11 @@
             'expense_in': { defaultIcon: 'fa-solid fa-bag-shopping', color: 'text-brand-borrow', text: '幫我代墊' },
             'waive_in_treat': { defaultIcon: 'fa-solid fa-gift', color: 'text-brand-textSub', text: '我請客' },
             'waive_in_bad': { defaultIcon: 'fa-solid fa-file-invoice-dollar', color: 'text-brand-textSub', text: '認列爛帳' },
-            'waive_out_treat': { defaultIcon: 'fa-solid fa-face-smile-wink', color: 'text-brand-textSub', text: '被請客' }
+            'waive_out_treat': { defaultIcon: 'fa-solid fa-face-smile-wink', color: 'text-brand-textSub', text: '被請客' },
+            
+            // 防呆保留：防止以前建立的舊代碼崩潰
+            'waive_in': { defaultIcon: 'fa-solid fa-gift', color: 'text-brand-textSub', text: '免除他欠款 (舊)' },
+            'waive_out': { defaultIcon: 'fa-solid fa-face-smile-wink', color: 'text-brand-textSub', text: '他免除我欠款 (舊)' }
         };
 
         function getIconHTML(iconVal) {
@@ -497,8 +504,8 @@
         function calculatePersonBalance(personName) {
             let balance = 0;
             records.filter(r => r.person === personName).forEach(r => {
-                if (['lend', 'repay_out', 'expense_out', 'waive_out_treat'].includes(r.type)) balance += r.amount; 
-                if (['borrow', 'repay_in', 'expense_in', 'waive_in_treat', 'waive_in_bad'].includes(r.type)) balance -= r.amount; 
+                if (['lend', 'repay_out', 'expense_out', 'waive_out_treat', 'waive_out'].includes(r.type)) balance += r.amount; 
+                if (['borrow', 'repay_in', 'expense_in', 'waive_in_treat', 'waive_in_bad', 'waive_in'].includes(r.type)) balance -= r.amount; 
             });
             return balance;
         }
@@ -522,6 +529,15 @@
             dl.innerHTML = '';
             const persons = [...new Set(records.map(r => r.person))];
             persons.forEach(p => { dl.innerHTML += `<option value="${p}">`; });
+        }
+
+        // 🌟 修正2：實作橫向滑動刪除對象 (Swipe to Delete)
+        function deletePerson(personName) {
+            if(confirm(`確定要刪除與「${personName}」的所有往來紀錄嗎？\n刪除後將無法恢復。`)) {
+                records = records.filter(r => r.person !== personName);
+                localStorage.setItem('my_ledger_records', JSON.stringify(records));
+                renderApp();
+            }
         }
 
         function switchView(view) {
@@ -611,33 +627,41 @@
                 emptyEl.style.display = 'none'; containerEl.classList.remove('hidden');
 
                 filteredContacts.forEach(contact => {
-                    const item = document.createElement('div');
-                    item.className = "px-5 py-4 border-b border-brand-light/60 last:border-b-0 flex justify-between items-center cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg transition-colors";
-                    item.onclick = () => openPersonDetailModal(contact.name);
-
                     let statusColor = 'text-brand-textSub'; let statusBg = 'bg-brand-bg'; let statusText = '已結清';
                     if (contact.balance > 0) { statusColor = 'text-brand-lend'; statusBg = 'bg-[#6B9080]/10'; statusText = '應收 (他欠我)'; } 
                     else if (contact.balance < 0) { statusColor = 'text-brand-borrow'; statusBg = 'bg-[#D5896F]/10'; statusText = '應付 (我欠他)'; }
-
                     const initial = contact.name.charAt(0);
+
+                    // 🌟 實作 CSS-only 原生級滑動刪除 (Swipe to Delete)
+                    const item = document.createElement('div');
+                    item.className = "border-b border-brand-light/60 last:border-b-0 overflow-hidden relative";
                     item.innerHTML = `
-                        <div class="flex flex-1 items-center gap-3.5">
-                            <div class="w-[44px] h-[44px] rounded-[14px] ${statusBg} ${statusColor} flex items-center justify-center font-bold text-xl shrink-0 border border-brand-light/30">
-                                ${initial}
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="text-[15px] font-bold text-brand-dark flex items-center leading-tight mb-1">
-                                    ${contact.name}
-                                </div>
-                                <div class="text-[12px] text-brand-textSub font-medium leading-none mt-1">最後互動: ${formatDateDisplay(contact.latestDate) || '無'}</div>
-                            </div>
+                        <div class="absolute inset-y-0 right-0 w-[80px] bg-red-500 text-white flex flex-col items-center justify-center cursor-pointer active:bg-red-600 transition-colors" onclick="deletePerson('${contact.name}')">
+                            <i class="fa-solid fa-trash-can text-lg mb-1"></i>
+                            <span class="text-[10px] font-bold">刪除</span>
                         </div>
-                        <div class="text-right flex items-center pl-2 shrink-0">
-                            <div class="flex flex-col items-end">
-                                <span class="text-[11px] font-bold ${statusColor} mb-1 leading-none">${statusText}</span>
-                                <span class="text-[17px] font-bold text-brand-dark leading-none tracking-tight">${formatMoney(contact.balance)}</span>
+                        <div class="overflow-x-auto hide-scrollbar snap-x snap-mandatory flex w-full h-full relative z-10 smooth-scroll">
+                            <div class="w-full shrink-0 snap-center bg-white px-5 py-4 flex justify-between items-center cursor-pointer active:bg-brand-bg transition-colors" onclick="openPersonDetailModal('${contact.name}')">
+                                <div class="flex flex-1 items-center gap-3.5">
+                                    <div class="w-[44px] h-[44px] rounded-[14px] ${statusBg} ${statusColor} flex items-center justify-center font-bold text-xl shrink-0 border border-brand-light/30">
+                                        ${initial}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="text-[15px] font-bold text-brand-dark flex items-center leading-tight mb-1">
+                                            ${contact.name}
+                                        </div>
+                                        <div class="text-[12px] text-brand-textSub font-medium leading-none mt-1">最後互動: ${formatDateDisplay(contact.latestDate) || '無'}</div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex items-center pl-2 shrink-0">
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-[11px] font-bold ${statusColor} mb-1 leading-none">${statusText}</span>
+                                        <span class="text-[17px] font-bold text-brand-dark leading-none tracking-tight">${formatMoney(contact.balance)}</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-left text-brand-textSub/30 text-[10px] ml-3" title="左滑刪除"></i>
+                                </div>
                             </div>
-                            <i class="fa-solid fa-chevron-right text-brand-textSub text-[12px] ml-2.5 opacity-40"></i>
+                            <div class="w-[80px] shrink-0 snap-center bg-transparent pointer-events-none"></div>
                         </div>
                     `;
                     listEl.appendChild(item);
@@ -695,7 +719,8 @@
         }
 
         function updateCustomDropdownDisplay(typeVal) {
-            const data = recordTypesData[typeVal];
+            // 防呆保護
+            const data = recordTypesData[typeVal] || { defaultIcon: 'fa-solid fa-box-open', color: 'text-brand-textSub', text: '未知紀錄' };
             document.getElementById('recordType').value = typeVal;
             document.getElementById('selectedTypeDisplay').innerHTML = `<i class="${data.defaultIcon} ${data.color} w-5 text-center text-lg"></i><span class="font-bold text-[15px] text-brand-dark">${data.text}</span>`;
         }
@@ -831,7 +856,6 @@
             const menu = document.getElementById('typeDropdownMenu');
             if(menu) { menu.classList.add('hidden'); menu.classList.remove('flex'); document.getElementById('typeDropdownIcon').classList.remove('rotate-180');}
             document.getElementById('iconDropdown').classList.add('hidden');
-            setTimeout(() => { formModal.style.transform = ''; }, 300);
         }
 
         function openPersonDetailModal(personName) {
@@ -840,9 +864,9 @@
             document.getElementById('detailPersonName').innerText = personName; document.getElementById('detailNetBalance').innerText = formatMoney(balance);
             const badgeEl = document.getElementById('detailStatusBadge'); const statusTextEl = document.getElementById('detailStatusText');
 
-            if (balance > 0) { badgeEl.innerText = '目前為 應收 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-[#6B9080]/10 text-brand-lend'; statusTextEl.innerText = `${personName} 總共需要給你`; } 
-            else if (balance < 0) { badgeEl.innerText = '目前為 應付 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-[#D5896F]/10 text-brand-borrow'; statusTextEl.innerText = `你總共需要給 ${personName}`; } 
-            else { badgeEl.innerText = '無欠款'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-brand-bg text-brand-textSub border border-brand-light'; statusTextEl.innerText = `你與 ${personName} 已經結清囉`; }
+            if (balance > 0) { badgeEl.innerText = '目前為 應收 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-white/20 text-white relative z-10'; statusTextEl.innerText = `${personName} 總共需要給你`; } 
+            else if (balance < 0) { badgeEl.innerText = '目前為 應付 狀態'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-[#D5896F] text-white relative z-10'; statusTextEl.innerText = `你總共需要給 ${personName}`; } 
+            else { badgeEl.innerText = '無欠款'; badgeEl.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md mb-2 bg-white/10 text-white/60 border border-white/10 relative z-10'; statusTextEl.innerText = `你與 ${personName} 已經結清囉`; }
 
             personRecordsCache = records.filter(r => r.person === personName).sort((a, b) => new Date(b.date) - new Date(a.date));
             document.getElementById('personDetailScroll').scrollTop = 0; renderPersonRecordsList();
@@ -863,10 +887,11 @@
             const pageRecords = personRecordsCache.slice(startIndex, startIndex + RECORDS_PER_PAGE);
 
             pageRecords.forEach(r => {
-                const data = recordTypesData[r.type];
-                let colorClass = data.color; let typeLabel = data.text; 
+                // 修正1：防呆處理
+                const data = recordTypesData[r.type] || { defaultIcon: 'fa-solid fa-box-open', color: 'text-brand-textSub', text: '未知紀錄' };
+                let colorClass = data.color; let typeLabel = data.text.split(' ')[0]; 
                 let bgClass = colorClass === 'text-brand-lend' ? 'bg-[#6B9080]/10' : (colorClass === 'text-brand-borrow' ? 'bg-[#D5896F]/10' : (colorClass === 'text-brand-primary' ? 'bg-brand-primary/10' : 'bg-brand-light/30'));
-                let operator = (['lend', 'repay_out', 'expense_out', 'waive_out_treat'].includes(r.type)) ? '+' : '-';
+                let operator = (['lend', 'repay_out', 'expense_out', 'waive_out_treat', 'waive_out'].includes(r.type)) ? '+' : '-';
                 
                 let iconVal = r.icon || data.defaultIcon;
 
@@ -915,14 +940,15 @@
 
         function closePersonDetailModal() {
             personDetailModal.classList.remove('active'); overlay.classList.remove('active'); overlay.style.zIndex = "40"; currentDetailPerson = null;
-            setTimeout(() => { personDetailModal.style.transform = ''; }, 300);
         }
 
+        // ================= 單筆紀錄詳細頁 Modal =================
         function openRecordDetailModal(id) {
             const r = records.find(x => x.id === id); if(!r) return;
             currentRecordId = id;
 
-            const data = recordTypesData[r.type];
+            // 修正1：防呆處理
+            const data = recordTypesData[r.type] || { defaultIcon: 'fa-solid fa-box-open', color: 'text-brand-textSub', text: '未知紀錄' };
             let bgClass = data.color === 'text-brand-lend' ? 'bg-[#6B9080]/10' : (data.color === 'text-brand-borrow' ? 'bg-[#D5896F]/10' : (data.color === 'text-brand-primary' ? 'bg-brand-primary/10' : 'bg-brand-light/30'));
             let iconVal = r.icon || data.defaultIcon;
 
@@ -967,7 +993,6 @@
 
         function closeRecordDetailModal() {
             recordDetailModal.classList.remove('active'); overlay.style.zIndex = "45"; currentRecordId = null;
-            setTimeout(() => { recordDetailModal.style.transform = ''; }, 300);
         }
 
         function openEditRecord() {
@@ -980,7 +1005,7 @@
             document.getElementById('recordNote').value = r.note || '';
             
             updateCustomDropdownDisplay(r.type);
-            const iconVal = r.icon || recordTypesData[r.type].defaultIcon;
+            const iconVal = r.icon || (recordTypesData[r.type] ? recordTypesData[r.type].defaultIcon : 'fa-solid fa-box-open');
             document.getElementById('recordIcon').value = iconVal;
             document.getElementById('currentIconDisplay').innerHTML = getIconHTML(iconVal);
 
@@ -1029,7 +1054,6 @@
                 modalElement.style.willChange = 'auto';
                 const deltaY = currentY - startY;
                 
-                // 核心修復：強制清除殘留的 Inline Transform，讓 CSS Class 接手歸位
                 modalElement.style.transform = '';
                 
                 if (deltaY > 100 || velocity > 0.6) closeCallback();
