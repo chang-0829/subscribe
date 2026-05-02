@@ -1,660 +1,1107 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>旅遊行程規劃</title>
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              primary: '#748CAB',
-              dark: '#3E5C76',
-              light: '#E6EBEF',
-              bg: '#F2F5F8',
-              card: '#FFFFFF',
-              textMain: '#2C3E50',
-              textSub: '#8796A5'
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>我的訂閱管理</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            primary: '#748CAB',
+                            dark: '#3E5C76',
+                            light: '#E6EBEF',
+                            bg: '#F2F5F8',
+                            card: '#FFFFFF',
+                            textMain: '#2C3E50',
+                            textSub: '#8796A5'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px rgba(62, 92, 118, 0.06)',
+                        'float': '0 -8px 32px rgba(62, 92, 118, 0.1)'
+                    }
+                }
             }
-          }
         }
-      }
-    }
-  </script>
+    </script>
+    <style>
+        body {
+            background-color: #E2E8F0;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #F2F5F8;
+        }
 
-  <style>
-    /* 隱藏捲軸 */
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    /* 確保輸入時間的icon可點擊 */
-    input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
-    
-    /* 底部抽屜動畫 */
-    .bottom-sheet { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .bottom-sheet.open { transform: translateY(0); }
-    .bottom-sheet.closed { transform: translateY(100%); }
-    
-    /* 背景遮罩動畫 */
-    .overlay { transition: opacity 0.3s ease; }
-    .overlay.open { opacity: 1; pointer-events: auto; }
-    .overlay.closed { opacity: 0; pointer-events: none; }
-    
-    /* 避免 iOS Safari 輸入時縮放 */
-    input, textarea { font-size: 16px !important; }
-  </style>
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+        .overlay {
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        #iconDropdownGrid {
+            overscroll-behavior: contain;
+        }
+    </style>
 </head>
-<body class="bg-brand-bg text-brand-textMain font-sans antialiased overflow-hidden">
+<body class="text-brand-textMain antialiased selection:bg-brand-primary selection:text-white">
 
-  <!-- APP 容器 (模擬手機版面) -->
-  <div id="app" class="max-w-md mx-auto h-[100dvh] bg-brand-bg shadow-xl relative flex flex-col">
-    
-    <!-- HEADER -->
-    <header class="bg-brand-bg pt-12 pb-4 px-6 shrink-0 flex justify-between items-end border-b border-brand-light z-10">
-      <div>
-        <p id="header-subtitle" class="text-sm font-bold text-brand-primary mb-1">My Trip</p>
-        <h1 id="header-title" class="text-3xl font-extrabold text-brand-dark tracking-tight">行程設定</h1>
-      </div>
-      <button id="btn-settings" class="hidden w-10 h-10 flex items-center justify-center bg-brand-card border border-brand-light shadow-sm rounded-full text-brand-textSub hover:text-brand-primary active:scale-95 transition-all">
-        <i class="fa-solid fa-gear text-lg"></i>
-      </button>
-    </header>
-
-    <!-- VIEW: SETUP (行程設定) -->
-    <div id="view-setup" class="flex-1 overflow-y-auto px-6 pb-12">
-      <form id="form-setup" class="space-y-5 mt-6">
-        <div class="bg-brand-card p-5 rounded-[20px] border border-brand-light shadow-[0_2px_10px_rgba(44,62,80,0.03)]">
-          <label class="block text-xs font-bold text-brand-textSub mb-2 uppercase tracking-wider">行程名稱</label>
-          <input type="text" id="setup-title" placeholder="例：東京五日遊" required
-            class="w-full text-xl font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/50">
-        </div>
-        <div class="flex gap-4">
-          <div class="bg-brand-card p-5 rounded-[20px] border border-brand-light shadow-[0_2px_10px_rgba(44,62,80,0.03)] flex-1">
-            <label class="block text-xs font-bold text-brand-textSub mb-2 uppercase tracking-wider">出發日期</label>
-            <input type="date" id="setup-start-date" class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent">
-          </div>
-          <div class="bg-brand-card p-5 rounded-[20px] border border-brand-light shadow-[0_2px_10px_rgba(44,62,80,0.03)] w-28">
-            <label class="block text-xs font-bold text-brand-textSub mb-2 uppercase tracking-wider">天數</label>
-            <input type="number" id="setup-days" min="1" max="30" value="3" required
-              class="w-full text-xl font-bold text-brand-textMain outline-none bg-transparent">
-          </div>
-        </div>
-        <div class="bg-brand-card p-5 rounded-[20px] border border-brand-light shadow-[0_2px_10px_rgba(44,62,80,0.03)]">
-          <label class="block text-xs font-bold text-brand-textSub mb-2 uppercase tracking-wider">住宿地點 (選填)</label>
-          <input type="text" id="setup-accommodation" placeholder="例：新宿格拉斯麗飯店"
-            class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/50">
-        </div>
-
-        <button type="submit" class="w-full bg-brand-primary text-brand-card font-bold text-lg py-4 rounded-[20px] shadow-lg shadow-brand-primary/20 hover:bg-brand-dark active:scale-[0.98] transition-all mt-8 flex justify-center items-center gap-2">
-          <i class="fa-solid fa-circle-check text-xl"></i> 儲存並開始規劃
-        </button>
-      </form>
-    </div>
-
-    <!-- VIEW: ITINERARY (行程表) -->
-    <div id="view-itinerary" class="hidden flex-1 flex flex-col h-full overflow-hidden bg-brand-bg relative">
-      <!-- Days Tabs -->
-      <div class="px-6 py-3 shrink-0 border-b border-brand-light bg-brand-bg z-10">
-        <div id="days-tabs" class="flex overflow-x-auto gap-3 snap-x hide-scrollbar pb-1">
-          <!-- 動態生成 Day 按鈕 -->
-        </div>
-      </div>
-
-      <!-- Timeline -->
-      <div id="timeline-container" class="flex-1 overflow-y-auto px-4 pb-32 pt-6 relative bg-brand-card rounded-t-[32px] mx-2 mt-2 shadow-[0_-4px_20px_rgba(44,62,80,0.03)] border border-brand-light border-b-0">
-        <!-- 動態生成行程項目 -->
-      </div>
-
-      <!-- Floating Action Buttons -->
-      <div class="absolute bottom-6 inset-x-0 px-6 flex justify-end gap-3 z-20 pointer-events-none">
-        <button id="btn-add-location" class="pointer-events-auto flex items-center justify-center gap-2 bg-brand-dark text-brand-card font-bold h-14 px-6 rounded-full shadow-lg shadow-brand-dark/20 active:scale-95 transition-all">
-          <i class="fa-solid fa-location-dot"></i> <span class="text-sm">地點</span>
-        </button>
-        <button id="btn-add-transport" class="pointer-events-auto flex items-center justify-center gap-2 bg-brand-primary text-brand-card font-bold h-14 px-6 rounded-full shadow-lg shadow-brand-primary/30 active:scale-95 transition-all">
-          <i class="fa-solid fa-train"></i> <span class="text-sm">交通</span>
-        </button>
-      </div>
-    </div>
-
-  </div> <!-- End App -->
-
-  <!-- ================= MODALS ================= -->
-
-  <!-- Background Overlay -->
-  <div id="modal-overlay" class="overlay closed fixed inset-0 z-[50] bg-brand-textMain/40 backdrop-blur-[2px]"></div>
-
-  <!-- Form Bottom Sheet (Add/Edit) -->
-  <div id="sheet-form" class="bottom-sheet closed fixed inset-x-0 bottom-0 z-[51] flex flex-col justify-end pointer-events-none">
-    <div class="pointer-events-auto relative bg-brand-card w-full max-w-md mx-auto rounded-t-[32px] shadow-2xl flex flex-col max-h-[90vh]">
-      <div class="w-12 h-1.5 bg-brand-light rounded-full mx-auto mt-4 mb-2"></div>
-      <div class="px-6 py-4 flex justify-between items-center shrink-0">
-        <h3 id="form-modal-title" class="text-xl font-bold text-brand-dark">新增項目</h3>
-        <button class="btn-close-modal w-8 h-8 flex items-center justify-center bg-brand-bg rounded-full text-brand-textSub hover:text-brand-textMain transition-colors">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      
-      <div class="px-6 pb-8 overflow-y-auto hide-scrollbar space-y-4">
+    <div class="app-container h-[100dvh] flex flex-col relative overflow-hidden">
         
-        <!-- 共用：時間 -->
-        <div class="bg-brand-bg p-4 rounded-[16px] border border-brand-light">
-          <label id="label-time" class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">時間 <span class="text-brand-primary">*</span></label>
-          <input type="time" id="input-time" required class="w-full text-2xl font-bold text-brand-textMain outline-none bg-transparent">
-        </div>
-
-        <!-- 交通專屬：交通工具選擇 -->
-        <div id="group-transport-mode" class="hidden bg-brand-bg p-4 rounded-[16px] border border-brand-light">
-          <label class="block text-xs font-bold text-brand-textSub mb-3 uppercase tracking-wider">交通工具</label>
-          <div id="transport-modes-grid" class="grid grid-cols-3 gap-2">
-            <!-- JS動態生成 -->
-          </div>
-        </div>
-
-        <!-- 共用：名稱 -->
-        <div class="bg-brand-bg p-4 rounded-[16px] border border-brand-light">
-          <label id="label-name" class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">名稱 <span class="text-brand-primary">*</span></label>
-          <input type="text" id="input-name" placeholder="" class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/60">
-        </div>
-
-        <!-- 地點專屬：備註 -->
-        <div id="group-location-subtitle" class="hidden bg-brand-bg p-4 rounded-[16px] border border-brand-light">
-          <label class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">備註</label>
-          <input type="text" id="input-subtitle" placeholder="例：第二航廈" class="w-full text-base font-bold text-brand-primary outline-none bg-transparent placeholder-brand-textSub/60">
-        </div>
-
-        <!-- 交通專屬：花費時間與站數 -->
-        <div id="group-transport-details" class="hidden flex gap-3">
-          <div class="bg-brand-bg p-4 rounded-[16px] border border-brand-light flex-1">
-            <label class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">花費時間</label>
-            <input type="text" id="input-duration" placeholder="例：40分" class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/60">
-          </div>
-          <div class="bg-brand-bg p-4 rounded-[16px] border border-brand-light flex-1">
-            <label class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">經過站數</label>
-            <input type="text" id="input-extraInfo" placeholder="例：2站" class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/60">
-          </div>
-        </div>
-
-        <!-- 交通專屬：費用 -->
-        <div id="group-transport-cost" class="hidden bg-brand-bg p-4 rounded-[16px] border border-brand-light">
-          <label class="block text-xs font-bold text-brand-textSub mb-1 uppercase tracking-wider">費用</label>
-          <input type="text" id="input-cost" placeholder="例：¥2,570" class="w-full text-lg font-bold text-brand-textMain outline-none bg-transparent placeholder-brand-textSub/60">
-        </div>
-        
-        <button id="btn-save-item" class="w-full bg-brand-primary text-brand-card font-bold text-lg py-4 rounded-[16px] shadow-lg shadow-brand-primary/20 mt-6 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none">
-          確定儲存
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Options Bottom Sheet (Edit/Delete Selector) -->
-  <div id="sheet-options" class="bottom-sheet closed fixed inset-x-0 bottom-0 z-[52] flex flex-col justify-end pointer-events-none">
-    <div class="pointer-events-auto relative bg-brand-card w-full max-w-md mx-auto rounded-t-[32px] shadow-2xl flex flex-col">
-      <div class="w-12 h-1.5 bg-brand-light rounded-full mx-auto mt-4 mb-2"></div>
-      <div class="px-6 py-4 flex justify-between items-center shrink-0 border-b border-brand-light/50">
-        <h3 class="text-xl font-bold text-brand-dark">選項</h3>
-        <button class="btn-close-modal w-8 h-8 flex items-center justify-center bg-brand-bg rounded-full text-brand-textSub hover:text-brand-textMain transition-colors">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      <div class="px-6 py-6 space-y-3">
-        <button id="btn-option-edit" class="w-full bg-brand-bg text-brand-dark font-bold text-lg py-4 rounded-[16px] flex justify-center items-center gap-2 hover:bg-brand-light transition-colors">
-          <i class="fa-solid fa-pen"></i> 編輯此項目
-        </button>
-        <button id="btn-option-delete" class="w-full bg-[#FFE5E5] text-[#E63946] font-bold text-lg py-4 rounded-[16px] flex justify-center items-center gap-2 hover:bg-[#FFD1D1] transition-colors">
-          <i class="fa-solid fa-trash-can"></i> 刪除此項目
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Dialog -->
-  <div id="modal-delete" class="overlay closed fixed inset-0 z-[60] flex items-center justify-center px-6">
-    <div class="absolute inset-0 bg-brand-textMain/60 backdrop-blur-sm btn-close-modal"></div>
-    <div class="relative bg-brand-card border border-brand-light rounded-[24px] p-8 w-full max-w-sm shadow-2xl transition-transform transform scale-95 opacity-0" id="delete-dialog-content">
-      <div class="w-16 h-16 bg-[#FFE5E5] rounded-full flex items-center justify-center mx-auto mb-4">
-        <i class="fa-solid fa-trash-can text-2xl text-[#E63946]"></i>
-      </div>
-      <h3 class="text-xl font-bold text-brand-textMain text-center mb-2">確認刪除</h3>
-      <p class="text-brand-textSub text-center mb-8 text-sm">刪除後將無法還原，確定要繼續嗎？</p>
-      <div class="flex gap-4">
-        <button id="btn-cancel-delete" class="btn-close-modal flex-1 py-3.5 bg-brand-bg text-brand-dark font-bold rounded-[16px] hover:bg-brand-light transition-colors">取消</button>
-        <button id="btn-confirm-delete" class="flex-1 py-3.5 bg-[#E63946] text-brand-card font-bold rounded-[16px] shadow-lg shadow-[#E63946]/20 active:scale-95 transition-all">確認刪除</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // --- Constants ---
-    const STORAGE_KEY = 'trip_itinerary_brand_html_v1';
-    const TRANSPORT_MODES = [
-      { id: 'train', label: '電車', icon: 'fa-solid fa-train' },
-      { id: 'bus', label: '公車', icon: 'fa-solid fa-bus' },
-      { id: 'car', label: '開車', icon: 'fa-solid fa-car' },
-      { id: 'taxi', label: '計程車', icon: 'fa-solid fa-taxi' },
-      { id: 'charter', label: '包車', icon: 'fa-solid fa-van-shuttle' },
-      { id: 'walk', label: '步行', icon: 'fa-solid fa-person-walking' },
-    ];
-
-    // --- State ---
-    let state = {
-      activeTab: 'setup', 
-      activeDay: 1,
-      tripData: { title: '', startDate: '', days: 3, accommodation: '', itinerary: {} },
-      
-      // Form State
-      modalMode: null, // 'form' | 'options' | 'delete' | null
-      itemType: 'location', // 'location' | 'transport'
-      editingId: null,
-      formData: { time: '', name: '', subtitle: '', mode: 'train', duration: '', extraInfo: '', cost: '' }
-    };
-
-    // --- DOM Elements ---
-    const els = {
-      viewSetup: document.getElementById('view-setup'),
-      viewItinerary: document.getElementById('view-itinerary'),
-      headerTitle: document.getElementById('header-title'),
-      headerSubtitle: document.getElementById('header-subtitle'),
-      btnSettings: document.getElementById('btn-settings'),
-      daysTabs: document.getElementById('days-tabs'),
-      timelineContainer: document.getElementById('timeline-container'),
-      
-      // Setup Form
-      formSetup: document.getElementById('form-setup'),
-      setupTitle: document.getElementById('setup-title'),
-      setupStartDate: document.getElementById('setup-start-date'),
-      setupDays: document.getElementById('setup-days'),
-      setupAcc: document.getElementById('setup-accommodation'),
-      
-      // Modals
-      overlay: document.getElementById('modal-overlay'),
-      sheetForm: document.getElementById('sheet-form'),
-      sheetOptions: document.getElementById('sheet-options'),
-      modalDelete: document.getElementById('modal-delete'),
-      dialogContent: document.getElementById('delete-dialog-content'),
-      
-      // Form Inputs
-      formTitle: document.getElementById('form-modal-title'),
-      inputTime: document.getElementById('input-time'),
-      inputName: document.getElementById('input-name'),
-      inputSubtitle: document.getElementById('input-subtitle'),
-      inputDuration: document.getElementById('input-duration'),
-      inputExtra: document.getElementById('input-extraInfo'),
-      inputCost: document.getElementById('input-cost'),
-      btnSaveItem: document.getElementById('btn-save-item'),
-      
-      // Input Groups (for toggling visibility)
-      groupMode: document.getElementById('group-transport-mode'),
-      groupSub: document.getElementById('group-location-subtitle'),
-      groupDetails: document.getElementById('group-transport-details'),
-      groupCost: document.getElementById('group-transport-cost'),
-      labelTime: document.getElementById('label-time'),
-      labelName: document.getElementById('label-name'),
-      transportModesGrid: document.getElementById('transport-modes-grid')
-    };
-
-    // --- Init ---
-    function init() {
-      loadData();
-      setupEventListeners();
-      renderApp();
-    }
-
-    // --- Storage ---
-    function loadData() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          state.tripData = JSON.parse(saved);
-          if (state.tripData.title) state.activeTab = 'itinerary';
-        }
-      } catch (e) { console.error("Load error:", e); }
-    }
-
-    function saveData() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tripData));
-      } catch (e) { alert("儲存失敗，請確認瀏覽器空間"); }
-    }
-
-    // --- Renders ---
-    function renderApp() {
-      if (state.activeTab === 'setup') {
-        els.viewSetup.classList.remove('hidden');
-        els.viewItinerary.classList.add('hidden');
-        els.headerTitle.innerText = '行程設定';
-        els.headerSubtitle.innerText = state.tripData.title || 'My Trip';
-        els.btnSettings.classList.add('hidden');
-        
-        // Populate Setup Form
-        els.setupTitle.value = state.tripData.title;
-        els.setupStartDate.value = state.tripData.startDate;
-        els.setupDays.value = state.tripData.days;
-        els.setupAcc.value = state.tripData.accommodation;
-      } else {
-        els.viewSetup.classList.add('hidden');
-        els.viewItinerary.classList.remove('hidden');
-        els.headerTitle.innerText = '行程表';
-        els.headerSubtitle.innerText = state.tripData.title;
-        els.btnSettings.classList.remove('hidden');
-        
-        renderDaysTabs();
-        renderTimeline();
-      }
-    }
-
-    function getDayDateString(dayIndex) {
-      if (!state.tripData.startDate) return `Day ${dayIndex}`;
-      const date = new Date(state.tripData.startDate);
-      date.setDate(date.getDate() + dayIndex - 1);
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    }
-
-    function renderDaysTabs() {
-      els.daysTabs.innerHTML = '';
-      for (let i = 1; i <= state.tripData.days; i++) {
-        const isActive = state.activeDay === i;
-        const btn = document.createElement('button');
-        btn.className = `snap-start shrink-0 px-5 py-2.5 rounded-full font-bold transition-all duration-200 border ${
-          isActive 
-            ? 'bg-brand-primary text-brand-card border-brand-primary shadow-md shadow-brand-primary/20' 
-            : 'bg-brand-card text-brand-textSub border-brand-light hover:bg-brand-light/50'
-        }`;
-        btn.innerHTML = `<div class="flex items-center gap-2"><span class="text-xs opacity-80">Day ${i}</span><span class="text-sm">${getDayDateString(i)}</span></div>`;
-        btn.onclick = () => { state.activeDay = i; renderDaysTabs(); renderTimeline(); };
-        els.daysTabs.appendChild(btn);
-      }
-    }
-
-    function renderTimeline() {
-      const items = state.tripData.itinerary[state.activeDay] || [];
-      els.timelineContainer.innerHTML = '';
-
-      if (items.length === 0) {
-        els.timelineContainer.innerHTML = `
-          <div class="flex flex-col items-center justify-center h-48 mt-12 text-brand-textSub">
-            <div class="w-16 h-16 bg-brand-bg border border-brand-light rounded-full flex items-center justify-center mb-4">
-              <i class="fa-solid fa-calendar-day text-2xl text-brand-primary"></i>
-            </div>
-            <p class="font-medium">這一天尚未安排行程</p>
-          </div>`;
-        return;
-      }
-
-      let html = '<div class="relative pl-2 pr-1">';
-      items.forEach((item, index) => {
-        const isLast = index === items.length - 1;
-        
-        if (item.type === 'location') {
-          html += `
-            <div class="relative flex group cursor-pointer" onclick="openOptions('${item.id}')">
-              <div class="w-16 shrink-0 pt-0.5 text-right pr-3">
-                <span class="text-[16px] font-bold text-brand-dark tracking-tight">${item.time}</span>
-              </div>
-              <div class="w-6 shrink-0 flex flex-col items-center relative">
-                <div class="w-3.5 h-3.5 rounded-full border-[3px] border-brand-primary bg-brand-card z-10 mt-1.5 shadow-sm"></div>
-                ${!isLast ? `<div class="absolute top-4 bottom-[-10px] w-1 bg-brand-light"></div>` : ''}
-              </div>
-              <div class="flex-1 pt-0 pb-6 pl-3 relative">
-                <div class="text-xl font-bold text-brand-textMain">${item.name}</div>
-                ${item.subtitle ? `<div class="text-sm font-medium text-brand-textSub mt-1">${item.subtitle}</div>` : ''}
-                <button class="absolute right-0 top-0 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark rounded-full transition-colors">
-                  <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+        <!-- ================= 1. 絕對置頂區域 ================= -->
+        <div id="fixedHeader" class="flex-none bg-brand-bg px-5 pt-12 pb-2 z-20 flex flex-col border-b border-transparent">
+            <header class="flex justify-between items-center mb-5">
+                <h1 class="text-2xl font-bold tracking-wide text-brand-dark" id="pageTitle">我的訂閱</h1>
+                <button id="headerAddBtn" onclick="openFormModal()" class="w-10 h-10 bg-white rounded-full shadow-sm text-brand-dark flex items-center justify-center hover:bg-brand-light transition-colors active:scale-95 shrink-0">
+                    <i class="fa-solid fa-plus text-lg"></i>
                 </button>
-              </div>
-            </div>`;
-        } else {
-          const modeObj = TRANSPORT_MODES.find(m => m.id === item.mode) || TRANSPORT_MODES[0];
-          html += `
-            <div class="relative flex group cursor-pointer" onclick="openOptions('${item.id}')">
-              <div class="w-16 shrink-0 py-4 text-right pr-3 flex flex-col items-end justify-center">
-                <span class="text-[13px] font-bold text-brand-textSub leading-tight whitespace-pre-wrap text-right">${item.duration}</span>
-                ${item.extraInfo ? `<span class="text-[11px] font-bold text-brand-primary mt-1 flex items-center">${item.extraInfo}<i class="fa-solid fa-caret-down text-[10px] ml-1"></i></span>` : ''}
-              </div>
-              <div class="w-6 shrink-0 flex flex-col items-center relative">
-                <div class="absolute top-[-10px] bottom-[-10px] w-1 bg-brand-light"></div>
-              </div>
-              <div class="flex-1 py-1.5 pl-3 pr-0">
-                <div class="bg-brand-bg border border-brand-light rounded-[16px] p-3 pb-3.5 relative overflow-hidden">
-                   <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary"></div>
-                   <div class="flex justify-between items-start mb-1.5 pl-1.5">
-                     <span class="text-[11px] font-bold text-brand-dark flex items-center gap-1.5 bg-brand-card border border-brand-light px-2 py-0.5 rounded-md shadow-sm">
-                       <i class="${modeObj.icon}"></i> ${modeObj.label}
-                     </span>
-                   </div>
-                   <div class="text-[15px] font-bold text-brand-textMain leading-snug pl-1.5">${item.name}</div>
-                   ${item.cost ? `<div class="text-[13px] font-medium text-brand-textSub mt-2 pl-1.5">費用：${item.cost}</div>` : ''}
-                   <button class="absolute right-1 top-1 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark rounded-full">
-                     <i class="fa-solid fa-ellipsis-vertical"></i>
-                  </button>
+            </header>
+
+            <div id="homeHeaderContent" class="flex flex-col gap-5">
+                <section class="bg-brand-card rounded-[24px] p-6 shadow-soft relative shrink-0">
+                    <div class="flex items-center gap-2 mb-2 text-brand-textSub">
+                        <i class="fa-solid fa-wallet text-brand-primary"></i>
+                        <h2 class="text-sm font-medium">每月平均花費 (TWD)</h2>
+                    </div>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span class="text-4xl font-bold tracking-tight text-brand-dark" id="totalAmount">$0</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-brand-bg flex justify-between items-center">
+                        <span class="text-sm font-medium text-brand-textSub bg-brand-light/50 px-3 py-1 rounded-full" id="subCount">共 0 項訂閱</span>
+                    </div>
+                </section>
+                <div class="flex justify-between items-end pb-1 bg-brand-bg">
+                    <h3 class="text-lg font-bold text-brand-dark">訂閱明細</h3>
                 </div>
-              </div>
-            </div>`;
+            </div>
+            
+            <div id="statsHeaderContent" class="hidden pb-2">
+                <p class="text-brand-textSub text-sm">各項分類的花費佔比與年度預估統計 (皆以台幣計)。</p>
+            </div>
+
+            <div id="settingsHeaderContent" class="hidden pb-2">
+                <p class="text-brand-textSub text-sm">管理你的下拉選單選項與外幣匯率。</p>
+            </div>
+        </div>
+
+        <!-- ================= 2. 內容滾動區域 ================= -->
+        <main id="mainScroll" class="flex-1 overflow-y-auto px-5 pt-2 pb-28 hide-scrollbar scroll-smooth">
+            
+            <div id="view-home" class="flex flex-col gap-4">
+                <div id="subListContainer" class="bg-white rounded-[24px] shadow-soft overflow-hidden hidden mb-6">
+                    <div id="subList" class="flex flex-col"></div>
+                </div>
+
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-5 text-brand-primary/40">
+                        <i class="fa-solid fa-box-open text-4xl"></i>
+                    </div>
+                    <p class="text-brand-dark font-bold text-lg mb-1">尚未建立任何訂閱</p>
+                    <p class="text-sm text-brand-textSub">點擊右上角「+」開始紀錄你的訂閱服務</p>
+                </div>
+            </div>
+
+            <!-- 【統計頁面】 -->
+            <div id="view-stats" class="hidden flex flex-col gap-6 pb-10 pt-2">
+                <div class="bg-gradient-to-br from-brand-dark to-brand-primary rounded-[24px] shadow-soft p-6 flex flex-col relative overflow-hidden text-white">
+                    <i class="fa-solid fa-chart-line absolute -right-6 -bottom-6 text-8xl opacity-10"></i>
+                    <div class="flex items-center gap-2 mb-2 text-white/80 z-10">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <h2 class="text-sm font-medium">預估年總花費 (TWD)</h2>
+                    </div>
+                    <div class="flex items-baseline gap-1 mt-1 z-10">
+                        <span class="text-4xl font-bold tracking-tight" id="statsAnnualTotal">$0</span>
+                    </div>
+                    <p class="text-xs text-white/70 mt-4 z-10">基於目前的月付與年付項目進行推算</p>
+                </div>
+
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">各分類佔比 (每月)</h4>
+                    </div>
+                    <div class="p-5">
+                        <div class="relative h-[220px] w-full flex justify-center mb-6">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        <div id="statsCategoryList" class="flex flex-col gap-0 border-t border-brand-light/40 pt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 【更多：設定頁面】 -->
+            <div id="view-settings" class="hidden flex flex-col gap-8 pb-10 pt-2">
+                
+                <!-- 匯率設定 -->
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-money-bill-transfer text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">匯率設定</h4>
+                    </div>
+                    <div class="px-5 py-4 flex justify-between items-center bg-white">
+                        <span class="text-brand-textMain font-bold text-[15px]">日幣 (JPY)</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-brand-textSub">x</span>
+                            <input type="number" id="rateJPY" step="0.001" onchange="updateRate('JPY', this.value)" 
+                                   class="w-20 bg-brand-bg border border-brand-light/50 rounded-xl px-3 py-2 outline-none text-sm font-bold text-brand-dark text-right focus:border-brand-primary transition-colors">
+                            <span class="text-sm text-brand-textSub">TWD</span>
+                        </div>
+                    </div>
+                    <p class="px-5 pb-4 text-xs text-brand-textSub -mt-1">此匯率將用於計算首頁總計與統計圖表。</p>
+                </div>
+
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">分類管理</h4>
+                    </div>
+                    <ul id="settingsCategoryList" class="flex flex-col"></ul>
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newCategoryInput" placeholder="新增分類 (例如：📱 通訊費)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addCategory()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-solid fa-store text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">訂閱管道管理</h4>
+                    </div>
+                    <ul id="settingsChannelList" class="flex flex-col"></ul>
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newChannelInput" placeholder="新增管道 (例如：電信代收)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addChannel()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[24px] shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-brand-light/60 bg-brand-card flex items-center gap-2">
+                        <i class="fa-regular fa-credit-card text-brand-primary"></i>
+                        <h4 class="font-bold text-brand-dark">付款方式管理</h4>
+                    </div>
+                    <ul id="settingsPaymentList" class="flex flex-col"></ul>
+                    <div class="px-5 py-4 bg-brand-bg/40 flex gap-3 items-center border-t border-brand-light/40">
+                        <input type="text" id="newPaymentInput" placeholder="新增付款方式 (例如：Apple Pay)" 
+                               class="bg-white border border-brand-light/50 rounded-xl px-4 py-2.5 outline-none flex-1 min-w-0 text-sm font-medium text-brand-dark placeholder:text-brand-textSub/60 focus:border-brand-primary transition-colors">
+                        <button onclick="addPayment()" class="bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 whitespace-nowrap shadow-sm hover:bg-brand-textMain active:scale-95 transition-all">新增</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ================= 3. 底部導覽列 ================= -->
+        <nav class="flex-none w-full bg-white/95 backdrop-blur-md border-t border-brand-light flex justify-around pt-3 pb-[env(safe-area-inset-bottom,20px)] px-2 z-30 text-[10px] text-brand-textSub">
+            <div onclick="switchTab('home')" id="tab-home" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer text-brand-dark font-bold transition-colors">
+                <i class="fa-solid fa-house text-xl mb-0.5" id="tab-home-icon"></i>
+                <span id="tab-home-text">總覽</span>
+            </div>
+            <div onclick="switchTab('stats')" id="tab-stats" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
+                <i class="fa-solid fa-chart-pie text-xl mb-0.5" id="tab-stats-icon"></i>
+                <span id="tab-stats-text">統計</span>
+            </div>
+            <div onclick="switchTab('settings')" id="tab-settings" class="nav-btn flex flex-col items-center gap-1.5 cursor-pointer hover:text-brand-dark transition-colors">
+                <i class="fa-solid fa-bars text-xl mb-0.5" id="tab-settings-icon"></i>
+                <span id="tab-settings-text">更多</span>
+            </div>
+        </nav>
+
+        <!-- ================= 共用 Overlay ================= -->
+        <div id="modalOverlay" class="overlay fixed inset-0 bg-brand-textMain/50 z-40 backdrop-blur-[2px]" onclick="closeAllModals()"></div>
+        
+        <!-- ================= 4. 表單 Modal ================= -->
+        <div id="formModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
+            
+            <div id="formModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
+                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+                <button onclick="closeAllModals()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h3 id="formModalTitle" class="text-xl font-bold text-center text-brand-dark relative pointer-events-none">新增訂閱</h3>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                <form id="saveForm" onsubmit="handleSave(event)" class="px-6 py-6 flex flex-col gap-6">
+                    <input type="hidden" id="editId" value="">
+                    
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">服務名稱</label>
+                        <div class="flex gap-3 relative z-10">
+                            <button type="button" onclick="toggleIconDropdown()" class="w-[52px] h-[52px] shrink-0 bg-brand-bg text-brand-primary rounded-[16px] flex items-center justify-center text-2xl transition-colors hover:bg-brand-light border border-brand-light relative overflow-hidden">
+                                <div id="currentIconDisplay" class="flex items-center justify-center w-full h-full"></div>
+                            </button>
+                            <input type="text" id="subName" required placeholder="例如：Netflix" 
+                                   class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all placeholder:text-brand-textSub/50 font-bold text-lg text-brand-dark">
+                        </div>
+                        
+                        <div id="iconDropdown" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-brand-light rounded-[16px] p-3 shadow-header z-30">
+                            <p class="text-xs text-brand-textSub mb-2 font-medium">選擇圖示：</p>
+                            <div class="grid grid-cols-6 gap-2 max-h-[150px] overflow-y-auto hide-scrollbar" id="iconDropdownGrid"></div>
+                        </div>
+                        <input type="hidden" id="subIcon" value="assets/icons/netflix.svg">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款週期</label>
+                            <select id="subCycle" onchange="toggleDateInput()" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none">
+                                <option value="monthly">每月</option>
+                                <option value="yearly">每年</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-brand-textSub mb-1.5">金額</label>
+                            <div class="flex items-center bg-brand-bg border border-transparent rounded-[16px] focus-within:border-brand-primary focus-within:bg-white transition-all overflow-hidden">
+                                <select id="subCurrency" class="bg-transparent border-none outline-none pl-4 py-3 font-bold text-brand-dark appearance-none pr-1">
+                                    <option value="TWD">TWD</option>
+                                    <option value="JPY">JPY</option>
+                                </select>
+                                <div class="w-[1.5px] h-4 bg-brand-light mx-1"></div>
+                                <input type="number" id="subPrice" required min="0" step="any" placeholder="390" 
+                                       class="bg-transparent border-none outline-none w-full px-2 py-3 font-bold text-lg text-brand-dark placeholder:text-brand-textSub/50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dateInputContainer">
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款日期</label>
+                        <div id="monthlyDateGroup" class="flex items-center bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all">
+                            <span class="text-brand-textSub mr-2 whitespace-nowrap text-sm font-medium">每月</span>
+                            <input type="number" id="subDateDay" required min="1" max="31" placeholder="15" 
+                                   class="bg-transparent border-none outline-none w-full min-w-0 text-center font-bold text-lg p-0 text-brand-dark placeholder:text-brand-textSub/50">
+                            <span class="text-brand-textSub ml-2 whitespace-nowrap text-sm font-medium">日</span>
+                        </div>
+                        
+                        <div id="yearlyDateGroup" class="hidden items-center bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus-within:border-brand-primary focus-within:bg-white transition-all gap-2">
+                            <span class="text-brand-textSub whitespace-nowrap text-sm font-medium shrink-0">每年</span>
+                            <input type="number" id="subDateMonthYearly" min="1" max="12" placeholder="12" 
+                                   class="bg-transparent border-none outline-none w-1/2 min-w-0 text-center font-bold text-lg p-0 text-brand-dark placeholder:text-brand-textSub/50 border-b border-brand-light rounded-none">
+                            <span class="text-brand-textSub whitespace-nowrap text-sm font-medium shrink-0">月</span>
+                            <input type="number" id="subDateDayYearly" min="1" max="31" placeholder="25" 
+                                   class="bg-transparent border-none outline-none w-1/2 min-w-0 text-center font-bold text-lg p-0 text-brand-dark placeholder:text-brand-textSub/50 border-b border-brand-light rounded-none">
+                            <span class="text-brand-textSub whitespace-nowrap text-sm font-medium shrink-0">日</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">分類</label>
+                        <select id="subCategory" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">訂閱管道</label>
+                        <select id="subChannel" required class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-brand-textSub mb-1.5">扣款方式 (選填)</label>
+                        <select id="subPayment" class="w-full bg-brand-bg border border-transparent rounded-[16px] px-4 py-3 focus:border-brand-primary focus:bg-white outline-none transition-all text-brand-dark font-bold appearance-none"></select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg">
+                <button type="button" onclick="document.getElementById('saveForm').requestSubmit()" class="w-full bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md">
+                    確認儲存
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= 5. 訂閱詳細資訊 Modal ================= -->
+        <div id="detailModal" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] flex flex-col max-h-[90dvh] max-w-[480px] mx-auto shadow-float overflow-hidden">
+            
+            <div id="detailModalHeader" class="flex-none pt-4 pb-4 px-6 bg-white rounded-t-[32px] border-b border-brand-bg relative cursor-grab active:cursor-grabbing touch-none">
+                <div class="w-14 h-1.5 bg-brand-light rounded-full mx-auto mb-4 pointer-events-none"></div>
+                <button onclick="closeAllModals()" class="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-brand-textSub hover:text-brand-dark transition-colors bg-brand-bg rounded-full z-10">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h3 class="text-xl font-bold text-center text-brand-dark pointer-events-none">訂閱詳細資訊</h3>
+            </div>
+            
+            <div id="detailModalScroll" class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                <div class="px-6 py-6 flex flex-col">
+                    <div class="flex flex-col items-center mb-8 relative">
+                        <div class="w-20 h-20 rounded-[24px] bg-brand-bg text-brand-primary flex items-center justify-center text-4xl mb-4 shadow-sm border border-brand-light/50 overflow-hidden relative">
+                            <div id="detailIconDisplay" class="flex items-center justify-center w-full h-full"></div>
+                        </div>
+                        <h2 id="detailName" class="text-2xl font-bold text-brand-dark mb-1"></h2>
+                        <div class="text-center text-brand-primary font-bold text-3xl" id="detailPrice"></div>
+                        <div id="detailTwdEquiv" class="text-sm font-medium text-brand-textSub mt-1 hidden"></div>
+                        <span id="detailCycleBadge" class="mt-3 text-xs font-bold px-2 py-1 rounded bg-brand-light text-brand-dark"></span>
+                    </div>
+
+                    <div class="bg-brand-bg rounded-[20px] p-5 flex flex-col gap-4 border border-brand-light/30">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">扣款日期</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailDate"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">分類</span>
+                            <span class="text-[15px] font-bold text-brand-dark bg-white px-2 py-0.5 rounded-md" id="detailCategory"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">訂閱管道</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailChannel"></span>
+                        </div>
+                        <div class="w-full h-px bg-brand-light/50"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-brand-textSub">扣款方式</span>
+                            <span class="text-[15px] font-bold text-brand-dark" id="detailPayment"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-none px-6 pt-3 pb-[env(safe-area-inset-bottom,32px)] bg-white border-t border-brand-bg flex gap-3">
+                <button onclick="triggerDeleteFromDetail()" class="w-[64px] shrink-0 bg-red-50 text-red-500 border border-red-100 rounded-[16px] py-4 flex justify-center items-center font-bold text-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button onclick="openEditForm()" class="flex-1 bg-brand-dark text-white rounded-[16px] py-4 font-bold text-lg hover:bg-brand-textMain active:scale-[0.98] transition-transform shadow-md flex justify-center items-center">
+                    <i class="fa-solid fa-pen mr-2"></i>編輯此訂閱
+                </button>
+            </div>
+        </div>
+
+        <!-- 刪除確認 Modal -->
+        <div id="deleteModal" class="overlay fixed inset-0 bg-brand-textMain/60 z-[60] flex items-center justify-center p-4 backdrop-blur-[2px] hidden">
+            <div class="bg-white rounded-[24px] p-6 w-full max-w-[320px] scale-95 opacity-0 transition-all shadow-float" id="deleteModalContent">
+                <div class="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4 text-2xl mx-auto">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="font-bold text-xl mb-2 text-center text-brand-dark">確定要刪除嗎？</h3>
+                <p class="text-brand-textSub text-sm mb-6 text-center">刪除後將無法恢復此訂閱紀錄。</p>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3.5 rounded-[14px] bg-brand-bg text-brand-textMain font-bold hover:bg-brand-light transition-colors">取消</button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3.5 rounded-[14px] bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-500/20">確認刪除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ======= 資料初始化 =======
+        let subscriptions = JSON.parse(localStorage.getItem('my_subscriptions')) || [];
+        
+        let defaultCategories = ['🍿 影音娛樂', '💼 生產力工具', '🎮 遊戲', '☁️ 雲端空間', '✨ 生活綜合'];
+        let categories = JSON.parse(localStorage.getItem('my_categories')) || defaultCategories;
+        
+        let defaultChannels = ['官方網站', 'App Store (Apple)', 'Google Play', '第三方代購'];
+        let channels = JSON.parse(localStorage.getItem('my_channels')) || defaultChannels;
+
+        let defaultPayments = ['台新 @GoGo卡', '國泰 CUBE 卡', '富邦 J卡', 'Apple Pay'];
+        let payments = JSON.parse(localStorage.getItem('my_payments')) || defaultPayments;
+
+        let rates = JSON.parse(localStorage.getItem('my_rates')) || { JPY: 0.21 };
+
+        // 修正：加入了 assets/icons/ 路徑
+        const availableIcons = [
+            'assets/icons/netflix.svg', 
+            'assets/icons/line.svg', 
+            'assets/icons/icloud.svg', 
+            'fa-brands fa-youtube', 
+            'fa-brands fa-spotify', 
+            'fa-brands fa-apple', 
+            'fa-solid fa-film', 
+            'fa-solid fa-gamepad', 
+            'fa-solid fa-cloud', 
+            'fa-solid fa-dumbbell', 
+            'fa-solid fa-music', 
+            'fa-solid fa-tv', 
+            'fa-solid fa-mobile-screen', 
+            'fa-solid fa-cart-shopping'
+        ];
+        
+        let currentDetailId = null;
+        let chartInstance = null;
+
+        const formatMoney = (num, currency = 'TWD') => {
+            return new Intl.NumberFormat('zh-TW', { 
+                style: 'currency', 
+                currency: currency, 
+                minimumFractionDigits: 0 
+            }).format(num);
+        };
+
+        // 自動判斷 SVG 渲染器
+        function getIconHTML(iconVal, sizeStr = 'normal') {
+            if (!iconVal) iconVal = 'fa-solid fa-box-open'; 
+            
+            // 防呆：如果之前的資料只存了 .svg (沒加路徑)，自動幫它補上 assets/icons/
+            if (iconVal.includes('.svg') && !iconVal.includes('/')) {
+                iconVal = 'assets/icons/' + iconVal;
+            }
+
+            if (iconVal.includes('.svg')) {
+                let sizeClass = 'w-6 h-6'; 
+                if (sizeStr === 'large') sizeClass = 'w-10 h-10'; 
+                return `<img src="${iconVal}" class="${sizeClass} object-contain" alt="icon" style="pointer-events: none;">`;
+            } 
+            else {
+                return `<i class="${iconVal}"></i>`;
+            }
         }
-      });
-      html += '</div>';
-      els.timelineContainer.innerHTML = html;
-    }
 
-    function renderTransportModes() {
-      els.transportModesGrid.innerHTML = TRANSPORT_MODES.map(mode => `
-        <button type="button" onclick="selectTransportMode('${mode.id}')"
-          class="mode-btn py-3 rounded-[12px] flex flex-col items-center gap-1.5 transition-all border ${
-            state.formData.mode === mode.id ? 'bg-brand-primary text-brand-card border-brand-primary shadow-sm' : 'bg-brand-card text-brand-textSub border-brand-light'
-          }">
-          <i class="${mode.icon} text-lg"></i>
-          <span class="text-xs font-bold">${mode.label}</span>
-        </button>
-      `).join('');
-    }
+        function switchTab(tab) {
+            const viewHome = document.getElementById('view-home');
+            const viewStats = document.getElementById('view-stats');
+            const viewSettings = document.getElementById('view-settings');
+            
+            const homeHeader = document.getElementById('homeHeaderContent');
+            const statsHeader = document.getElementById('statsHeaderContent');
+            const settingsHeader = document.getElementById('settingsHeaderContent');
+            
+            const pageTitle = document.getElementById('pageTitle');
+            const mainScroll = document.getElementById('mainScroll');
+            const headerAddBtn = document.getElementById('headerAddBtn');
+            
+            mainScroll.scrollTop = 0;
+            
+            ['home', 'stats', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('text-brand-dark', 'font-bold');
+                document.getElementById(`tab-${t}`).classList.add('text-brand-textSub');
+                document.getElementById(`tab-${t}-icon`).classList.remove('text-brand-dark');
+                document.getElementById(`tab-${t}-text`).classList.remove('text-brand-dark');
+            });
 
-    // --- Modal Logic ---
-    function openFormModal(type, editingId = null) {
-      state.itemType = type;
-      state.editingId = editingId;
-      
-      if (editingId) {
-        const item = state.tripData.itinerary[state.activeDay].find(i => i.id === editingId);
-        state.formData = { ...item };
-        els.formTitle.innerText = '編輯項目';
-      } else {
-        const now = new Date();
-        const timeString = now.toTimeString().slice(0, 5);
-        state.formData = { time: timeString, name: '', subtitle: '', mode: 'train', duration: '', extraInfo: '', cost: '' };
-        els.formTitle.innerText = type === 'location' ? '新增地點' : '新增交通';
-      }
+            document.getElementById(`tab-${tab}`).classList.add('text-brand-dark', 'font-bold');
+            document.getElementById(`tab-${tab}`).classList.remove('text-brand-textSub');
+            document.getElementById(`tab-${tab}-icon`).classList.add('text-brand-dark');
+            document.getElementById(`tab-${tab}-text`).classList.add('text-brand-dark');
 
-      // Toggle Fields visibility based on type
-      if (type === 'location') {
-        els.groupMode.classList.add('hidden');
-        els.groupSub.classList.remove('hidden');
-        els.groupDetails.classList.add('hidden');
-        els.groupCost.classList.add('hidden');
-        els.labelTime.innerHTML = '時間 <span class="text-brand-primary">*</span>';
-        els.labelName.innerHTML = '地點名稱 <span class="text-brand-primary">*</span>';
-        els.inputName.placeholder = '例：成田空港';
-      } else {
-        els.groupMode.classList.remove('hidden');
-        els.groupSub.classList.add('hidden');
-        els.groupDetails.classList.remove('hidden');
-        els.groupCost.classList.remove('hidden');
-        els.labelTime.innerHTML = '排序時間 <span class="text-brand-primary">*</span>';
-        els.labelName.innerHTML = '路線名稱 <span class="text-brand-primary">*</span>';
-        els.inputName.placeholder = '例：Skyliner';
-        renderTransportModes();
-      }
+            if (tab === 'home') {
+                viewHome.classList.remove('hidden');
+                viewStats.classList.add('hidden');
+                viewSettings.classList.add('hidden');
+                homeHeader.classList.remove('hidden');
+                statsHeader.classList.add('hidden');
+                settingsHeader.classList.add('hidden');
+                headerAddBtn.classList.remove('hidden'); 
+                pageTitle.innerText = "我的訂閱";
+                renderApp();
+            } else if (tab === 'stats') {
+                viewHome.classList.add('hidden');
+                viewStats.classList.remove('hidden');
+                viewSettings.classList.add('hidden');
+                homeHeader.classList.add('hidden');
+                statsHeader.classList.remove('hidden');
+                settingsHeader.classList.add('hidden');
+                headerAddBtn.classList.add('hidden');
+                pageTitle.innerText = "統計分析";
+                renderStats(); 
+            } else if (tab === 'settings') {
+                viewHome.classList.add('hidden');
+                viewStats.classList.add('hidden');
+                viewSettings.classList.remove('hidden');
+                homeHeader.classList.add('hidden');
+                statsHeader.classList.add('hidden');
+                settingsHeader.classList.remove('hidden');
+                headerAddBtn.classList.add('hidden');
+                pageTitle.innerText = "設定與管理";
+                renderSettings();
+            }
+        }
 
-      // Set Input values
-      els.inputTime.value = state.formData.time;
-      els.inputName.value = state.formData.name;
-      els.inputSubtitle.value = state.formData.subtitle;
-      els.inputDuration.value = state.formData.duration;
-      els.inputExtra.value = state.formData.extraInfo;
-      els.inputCost.value = state.formData.cost;
+        function toggleDateInput() {
+            const cycle = document.getElementById('subCycle').value;
+            const monthlyGroup = document.getElementById('monthlyDateGroup');
+            const yearlyGroup = document.getElementById('yearlyDateGroup');
+            const subDateDay = document.getElementById('subDateDay');
+            const subDateMonthYearly = document.getElementById('subDateMonthYearly');
+            const subDateDayYearly = document.getElementById('subDateDayYearly');
 
-      validateForm();
-      showModal('form');
-    }
+            if (cycle === 'yearly') {
+                monthlyGroup.classList.add('hidden');
+                monthlyGroup.classList.remove('flex');
+                yearlyGroup.classList.add('flex');
+                yearlyGroup.classList.remove('hidden');
+                subDateDay.removeAttribute('required');
+                subDateMonthYearly.setAttribute('required', 'required');
+                subDateDayYearly.setAttribute('required', 'required');
+            } else {
+                yearlyGroup.classList.add('hidden');
+                yearlyGroup.classList.remove('flex');
+                monthlyGroup.classList.add('flex');
+                monthlyGroup.classList.remove('hidden');
+                subDateMonthYearly.removeAttribute('required');
+                subDateDayYearly.removeAttribute('required');
+                subDateDay.setAttribute('required', 'required');
+            }
+        }
 
-    // Global function for onclick attributes
-    window.openOptions = function(id) {
-      state.editingId = id;
-      showModal('options');
-    };
+        function toggleIconDropdown() {
+            const dropdown = document.getElementById('iconDropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                renderIconDropdown();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
 
-    window.selectTransportMode = function(id) {
-      state.formData.mode = id;
-      renderTransportModes();
-    };
+        function renderIconDropdown() {
+            const grid = document.getElementById('iconDropdownGrid');
+            grid.innerHTML = '';
+            availableIcons.forEach(iconVal => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "w-10 h-10 rounded-[12px] bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-brand-primary hover:text-white transition-colors text-lg relative";
+                
+                btn.innerHTML = getIconHTML(iconVal, 'normal');
+                
+                btn.onclick = () => {
+                    document.getElementById('currentIconDisplay').innerHTML = getIconHTML(iconVal, 'normal');
+                    document.getElementById('subIcon').value = iconVal;
+                    document.getElementById('iconDropdown').classList.add('hidden');
+                };
+                grid.appendChild(btn);
+            });
+        }
 
-    function showModal(modalName) {
-      els.overlay.classList.remove('closed');
-      els.overlay.classList.add('open');
-      
-      if (modalName === 'form') {
-        els.sheetForm.classList.remove('closed');
-        els.sheetForm.classList.add('open');
-      } else if (modalName === 'options') {
-        els.sheetOptions.classList.remove('closed');
-        els.sheetOptions.classList.add('open');
-      } else if (modalName === 'delete') {
-        els.modalDelete.classList.remove('closed');
-        els.modalDelete.classList.add('open');
-        els.dialogContent.classList.remove('scale-95', 'opacity-0');
-        els.dialogContent.classList.add('scale-100', 'opacity-100');
-      }
-      state.modalMode = modalName;
-    }
+        function updateRate(currency, value) {
+            const num = parseFloat(value);
+            if (!isNaN(num) && num > 0) {
+                rates[currency] = num;
+                localStorage.setItem('my_rates', JSON.stringify(rates));
+                renderApp();
+            }
+        }
 
-    function closeAllModals() {
-      els.overlay.classList.remove('open');
-      els.overlay.classList.add('closed');
-      
-      els.sheetForm.classList.remove('open');
-      els.sheetForm.classList.add('closed');
-      
-      els.sheetOptions.classList.remove('open');
-      els.sheetOptions.classList.add('closed');
-      
-      els.modalDelete.classList.remove('open');
-      els.modalDelete.classList.add('closed');
-      els.dialogContent.classList.add('scale-95', 'opacity-0');
-      els.dialogContent.classList.remove('scale-100', 'opacity-100');
-      
-      state.modalMode = null;
-    }
+        function renderSettings() {
+            document.getElementById('rateJPY').value = rates.JPY;
 
-    // --- Actions ---
-    function validateForm() {
-      const isValid = els.inputTime.value.trim() !== '' && els.inputName.value.trim() !== '';
-      els.btnSaveItem.disabled = !isValid;
-    }
+            const createListHTML = (items, removeFuncStr) => {
+                let html = '';
+                items.forEach((item, index) => {
+                    html += `
+                        <li class="flex justify-between items-center px-5 py-3.5 border-b border-brand-light/40 last:border-0 bg-white">
+                            <span class="text-brand-textMain font-bold text-[15px]">${item}</span>
+                            <button onclick="${removeFuncStr}(${index})" class="text-brand-textSub/40 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        </li>
+                    `;
+                });
+                return html;
+            };
 
-    function handleFormInputs() {
-      state.formData.time = els.inputTime.value;
-      state.formData.name = els.inputName.value;
-      state.formData.subtitle = els.inputSubtitle.value;
-      state.formData.duration = els.inputDuration.value;
-      state.formData.extraInfo = els.inputExtra.value;
-      state.formData.cost = els.inputCost.value;
-      validateForm();
-    }
+            document.getElementById('settingsCategoryList').innerHTML = createListHTML(categories, 'removeCategory');
+            document.getElementById('settingsChannelList').innerHTML = createListHTML(channels, 'removeChannel');
+            document.getElementById('settingsPaymentList').innerHTML = createListHTML(payments, 'removePayment');
+        }
 
-    function saveItem() {
-      if (!state.formData.time || !state.formData.name) return;
-      
-      if (!state.tripData.itinerary[state.activeDay]) {
-        state.tripData.itinerary[state.activeDay] = [];
-      }
-      
-      const currentItems = state.tripData.itinerary[state.activeDay];
-      const newItem = { ...state.formData, type: state.itemType, id: state.editingId || Date.now().toString() };
-      
-      if (state.editingId) {
-        const index = currentItems.findIndex(i => i.id === state.editingId);
-        if (index > -1) currentItems[index] = newItem;
-      } else {
-        currentItems.push(newItem);
-      }
+        function addCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const val = input.value.trim();
+            if (val && !categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('my_categories', JSON.stringify(categories));
+                input.value = '';
+                renderSettings(); renderFormDropdowns();
+            }
+        }
+        function removeCategory(index) {
+            if (categories.length <= 1) return alert('至少需保留一個分類');
+            categories.splice(index, 1);
+            localStorage.setItem('my_categories', JSON.stringify(categories));
+            renderSettings(); renderFormDropdowns();
+        }
 
-      currentItems.sort((a, b) => a.time.localeCompare(b.time));
-      saveData();
-      closeAllModals();
-      renderTimeline();
-    }
+        function addChannel() {
+            const input = document.getElementById('newChannelInput');
+            const val = input.value.trim();
+            if (val && !channels.includes(val)) {
+                channels.push(val);
+                localStorage.setItem('my_channels', JSON.stringify(channels));
+                input.value = '';
+                renderSettings(); renderFormDropdowns();
+            }
+        }
+        function removeChannel(index) {
+            if (channels.length <= 1) return alert('至少需保留一個管道');
+            channels.splice(index, 1);
+            localStorage.setItem('my_channels', JSON.stringify(channels));
+            renderSettings(); renderFormDropdowns();
+        }
 
-    function deleteItem() {
-      if (!state.editingId) return;
-      state.tripData.itinerary[state.activeDay] = state.tripData.itinerary[state.activeDay].filter(i => i.id !== state.editingId);
-      saveData();
-      closeAllModals();
-      renderTimeline();
-    }
+        function addPayment() {
+            const input = document.getElementById('newPaymentInput');
+            const val = input.value.trim();
+            if (val && !payments.includes(val)) {
+                payments.push(val);
+                localStorage.setItem('my_payments', JSON.stringify(payments));
+                input.value = '';
+                renderSettings(); renderFormDropdowns();
+            }
+        }
+        function removePayment(index) {
+            payments.splice(index, 1);
+            localStorage.setItem('my_payments', JSON.stringify(payments));
+            renderSettings(); renderFormDropdowns();
+        }
 
-    // --- Events ---
-    function setupEventListeners() {
-      // Top Navigation
-      els.btnSettings.addEventListener('click', () => {
-        state.activeTab = 'setup';
+        function renderFormDropdowns() {
+            const populate = (id, items, includeEmpty = false) => {
+                const select = document.getElementById(id);
+                select.innerHTML = includeEmpty ? '<option value="">未設定</option>' : '';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.innerText = item;
+                    select.appendChild(option);
+                });
+            };
+            populate('subCategory', categories);
+            populate('subChannel', channels);
+            populate('subPayment', payments, true);
+        }
+
+        function renderApp() {
+            const listEl = document.getElementById('subList');
+            const listContainer = document.getElementById('subListContainer');
+            const emptyEl = document.getElementById('emptyState');
+            const totalEl = document.getElementById('totalAmount');
+            const countEl = document.getElementById('subCount');
+
+            let monthlyTotal = 0;
+            subscriptions.forEach(sub => {
+                let cost = sub.price;
+                const currency = sub.currency || 'TWD';
+                if (currency === 'JPY') {
+                    cost = cost * (rates.JPY || 0.21);
+                }
+                if (sub.cycle === 'yearly') {
+                    cost = cost / 12;
+                }
+                monthlyTotal += cost;
+            });
+            
+            totalEl.innerText = formatMoney(Math.round(monthlyTotal));
+            countEl.innerText = `${subscriptions.length} 項訂閱`;
+
+            localStorage.setItem('my_subscriptions', JSON.stringify(subscriptions));
+            renderFormDropdowns();
+            listEl.innerHTML = '';
+
+            if (subscriptions.length === 0) {
+                listContainer.classList.add('hidden');
+                emptyEl.style.display = 'flex';
+            } else {
+                listContainer.classList.remove('hidden');
+                emptyEl.style.display = 'none';
+                
+                subscriptions.sort((a, b) => {
+                    let dateA = a.cycle === 'yearly' ? parseInt(a.date.split('/')[0]) * 100 + parseInt(a.date.split('/')[1]) : parseInt(a.date);
+                    let dateB = b.cycle === 'yearly' ? parseInt(b.date.split('/')[0]) * 100 + parseInt(b.date.split('/')[1]) : parseInt(b.date);
+                    return dateA - dateB;
+                }).forEach(sub => {
+                    const item = document.createElement('div');
+                    item.className = "px-5 py-3.5 border-b border-brand-light/60 last:border-b-0 flex justify-between items-center cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg transition-colors";
+                    item.onclick = () => openDetailModal(sub.id);
+
+                    const dateDisplay = sub.cycle === 'yearly' ? `每年 ${sub.date} 扣款` : `每月 ${sub.date} 日扣款`;
+                    const cycleBadge = sub.cycle === 'yearly' ? '<span class="ml-1.5 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded leading-none">年付</span>' : '';
+                    const currencyLabel = sub.currency || 'TWD';
+
+                    item.innerHTML = `
+                        <div class="flex flex-1 items-center gap-3">
+                            <div class="w-[44px] h-[44px] rounded-[14px] bg-brand-bg text-brand-primary flex items-center justify-center text-xl shrink-0 border border-brand-light/30">
+                                ${getIconHTML(sub.icon, 'normal')}
+                            </div>
+                            <div class="flex flex-col">
+                                <div class="text-[15px] font-bold text-brand-dark flex items-center leading-tight mb-1">
+                                    ${sub.name} ${cycleBadge}
+                                </div>
+                                <div class="text-[12px] text-brand-textSub font-medium leading-none">${dateDisplay}</div>
+                            </div>
+                        </div>
+                        <div class="text-right flex items-center pl-2 shrink-0">
+                            <span class="text-xs text-brand-textSub mr-1 font-bold">${currencyLabel}</span>
+                            <span class="text-[17px] font-bold text-brand-dark leading-none">${sub.price}</span>
+                            <i class="fa-solid fa-chevron-right text-brand-textSub text-[12px] ml-2 opacity-50"></i>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
+            }
+        }
+
+        function renderStats() {
+            const annualTotalEl = document.getElementById('statsAnnualTotal');
+            const categoryListEl = document.getElementById('statsCategoryList');
+            
+            let annualTotal = 0;
+            const categoryMonthlyTotals = {};
+
+            subscriptions.forEach(sub => {
+                let baseMonthlyCost = sub.price;
+                const currency = sub.currency || 'TWD';
+                
+                if (currency === 'JPY') {
+                    baseMonthlyCost = baseMonthlyCost * (rates.JPY || 0.21);
+                }
+
+                const monthlyCost = sub.cycle === 'yearly' ? baseMonthlyCost / 12 : baseMonthlyCost;
+                const yearlyCost = monthlyCost * 12;
+                
+                annualTotal += yearlyCost;
+
+                if (!categoryMonthlyTotals[sub.category]) {
+                    categoryMonthlyTotals[sub.category] = 0;
+                }
+                categoryMonthlyTotals[sub.category] += monthlyCost;
+            });
+
+            annualTotalEl.innerText = formatMoney(Math.round(annualTotal));
+
+            const labels = Object.keys(categoryMonthlyTotals);
+            const dataValues = Object.values(categoryMonthlyTotals).map(v => Math.round(v));
+            const totalMonthlyAmount = dataValues.reduce((a, b) => a + b, 0);
+
+            const morandiColors = ['#748CAB', '#A2B5CD', '#3E5C76', '#C5D3E8', '#5A7A96', '#8EA4BD', '#2A435D'];
+
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy(); 
+            
+            if(dataValues.length === 0) {
+                categoryListEl.innerHTML = '<p class="text-center text-brand-textSub py-4 text-sm">目前尚無訂閱資料</p>';
+                return;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: morandiColors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let value = context.parsed;
+                                    let percentage = Math.round((value / totalMonthlyAmount) * 100);
+                                    return ` TWD ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            categoryListEl.innerHTML = '';
+            const sortedIndices = dataValues.map((_, i) => i).sort((a, b) => dataValues[b] - dataValues[a]);
+            
+            sortedIndices.forEach(i => {
+                const label = labels[i];
+                const value = dataValues[i];
+                const pct = totalMonthlyAmount ? Math.round((value / totalMonthlyAmount) * 100) : 0;
+                const color = morandiColors[i % morandiColors.length];
+
+                categoryListEl.innerHTML += `
+                    <div class="flex items-center justify-between py-3 border-b border-brand-light/40 last:border-0">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full" style="background-color: ${color}"></span>
+                            <span class="font-bold text-[14px] text-brand-dark">${label}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-brand-textSub w-8 text-right">${pct}%</span>
+                            <span class="font-bold text-[15px] text-brand-dark w-16 text-right">${value}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function handleSave(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            const name = document.getElementById('subName').value;
+            const price = document.getElementById('subPrice').value;
+            const cycle = document.getElementById('subCycle').value;
+            const currency = document.getElementById('subCurrency').value;
+            const category = document.getElementById('subCategory').value;
+            const channel = document.getElementById('subChannel').value;
+            const payment = document.getElementById('subPayment').value;
+            const icon = document.getElementById('subIcon').value;
+
+            let date = '';
+            if (cycle === 'yearly') {
+                const month = document.getElementById('subDateMonthYearly').value;
+                const day = document.getElementById('subDateDayYearly').value;
+                if (!month || !day) return; 
+                date = `${month}/${day}`;
+            } else {
+                date = document.getElementById('subDateDay').value;
+                if (!date) return;
+            }
+
+            if (name && price && date) {
+                const subData = {
+                    id: editId ? editId : Date.now().toString(), 
+                    name: name, price: Number(price), cycle: cycle, currency: currency, date: date, 
+                    category: category, channel: channel, payment: payment, icon: icon
+                };
+
+                if (editId) {
+                    const index = subscriptions.findIndex(s => s.id === editId);
+                    if (index !== -1) subscriptions[index] = subData;
+                } else {
+                    subscriptions.push(subData);
+                }
+
+                renderApp();
+                closeAllModals();
+            }
+        }
+
+        const overlay = document.getElementById('modalOverlay');
+        const formModal = document.getElementById('formModal');
+        const detailModal = document.getElementById('detailModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteModalContent = document.getElementById('deleteModalContent');
+        const mainScroll = document.getElementById('mainScroll');
+
+        function openFormModal(isEdit = false) {
+            document.getElementById('iconDropdown').classList.add('hidden');
+            formModal.classList.add('active');
+            overlay.classList.add('active');
+            mainScroll.style.overflowY = 'hidden';
+            
+            if(!isEdit) {
+                document.getElementById('saveForm').reset();
+                document.getElementById('editId').value = '';
+                document.getElementById('formModalTitle').innerText = '新增訂閱';
+                
+                const currentIcon = availableIcons[0]; 
+                document.getElementById('currentIconDisplay').innerHTML = getIconHTML(currentIcon, 'normal');
+                document.getElementById('subIcon').value = currentIcon;
+                
+                renderFormDropdowns();
+                if(categories.length > 0) document.getElementById('subCategory').value = categories[0];
+                if(channels.length > 0) document.getElementById('subChannel').value = channels[0];
+                document.getElementById('subPayment').value = '';
+                document.getElementById('subCurrency').value = 'TWD';
+                
+                document.getElementById('subCycle').value = 'monthly';
+                toggleDateInput();
+            }
+        }
+
+        function openEditForm() {
+            const sub = subscriptions.find(s => s.id === currentDetailId);
+            if(!sub) return;
+
+            detailModal.classList.remove('active');
+            
+            document.getElementById('editId').value = sub.id;
+            document.getElementById('formModalTitle').innerText = '編輯訂閱';
+            document.getElementById('subName').value = sub.name;
+            document.getElementById('subPrice').value = sub.price;
+            document.getElementById('subCurrency').value = sub.currency || 'TWD';
+            document.getElementById('subCategory').value = sub.category || (categories[0] || '');
+            document.getElementById('subChannel').value = sub.channel || (channels[0] || '');
+            document.getElementById('subPayment').value = sub.payment || '';
+            document.getElementById('subIcon').value = sub.icon;
+            
+            document.getElementById('currentIconDisplay').innerHTML = getIconHTML(sub.icon, 'normal');
+            
+            document.getElementById('subCycle').value = sub.cycle || 'monthly';
+            toggleDateInput();
+            
+            if (sub.cycle === 'yearly') {
+                const parts = sub.date.split('/');
+                document.getElementById('subDateMonthYearly').value = parts[0];
+                document.getElementById('subDateDayYearly').value = parts[1];
+            } else {
+                document.getElementById('subDateDay').value = sub.date;
+            }
+
+            setTimeout(() => { formModal.classList.add('active'); }, 100);
+        }
+
+        function openDetailModal(id) {
+            const sub = subscriptions.find(s => s.id === id);
+            if(!sub) return;
+
+            currentDetailId = id;
+            
+            document.getElementById('detailIconDisplay').innerHTML = getIconHTML(sub.icon, 'large');
+            document.getElementById('detailName').innerText = sub.name;
+            
+            const currency = sub.currency || 'TWD';
+            document.getElementById('detailPrice').innerText = formatMoney(sub.price, currency);
+
+            const equivEl = document.getElementById('detailTwdEquiv');
+            if (currency === 'JPY') {
+                const twdEquivalent = Math.round(sub.price * (rates.JPY || 0.21));
+                equivEl.innerText = `約合 TWD $${twdEquivalent}`;
+                equivEl.classList.remove('hidden');
+            } else {
+                equivEl.classList.add('hidden');
+            }
+            
+            const isYearly = sub.cycle === 'yearly';
+            document.getElementById('detailDate').innerText = isYearly ? `每年 ${sub.date}` : `每月 ${sub.date} 日`;
+            
+            const badge = document.getElementById('detailCycleBadge');
+            if (isYearly) {
+                badge.innerText = '年繳專案';
+                badge.className = 'mt-3 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-primary text-white';
+            } else {
+                badge.innerText = '月繳專案';
+                badge.className = 'mt-3 text-xs font-bold px-2.5 py-1 rounded-md bg-brand-light text-brand-dark';
+            }
+
+            document.getElementById('detailCategory').innerText = sub.category;
+            document.getElementById('detailChannel').innerText = sub.channel;
+            document.getElementById('detailPayment').innerText = sub.payment || '未設定';
+
+            mainScroll.style.overflowY = 'hidden';
+            document.getElementById('detailModalScroll').scrollTop = 0;
+
+            detailModal.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closeAllModals() {
+            formModal.classList.remove('active');
+            detailModal.classList.remove('active');
+            overlay.classList.remove('active');
+            document.getElementById('iconDropdown').classList.add('hidden');
+            currentDetailId = null;
+
+            setTimeout(() => {
+                mainScroll.style.overflowY = 'auto';
+                formModal.style.transform = '';
+                detailModal.style.transform = '';
+            }, 300);
+        }
+
+        function triggerDeleteFromDetail() {
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => { deleteModalContent.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeDeleteModal() {
+            deleteModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { deleteModal.classList.add('hidden'); }, 200);
+        }
+
+        function confirmDelete() {
+            if(currentDetailId) {
+                subscriptions = subscriptions.filter(sub => sub.id !== currentDetailId);
+                renderApp();
+                closeDeleteModal();
+                closeAllModals();
+            }
+        }
+
+        document.getElementById('saveForm').addEventListener('click', (e) => {
+            if (!e.target.closest('#iconDropdown') && !e.target.closest('button[onclick="toggleIconDropdown()"]')) {
+                document.getElementById('iconDropdown').classList.add('hidden');
+            }
+        });
+
+        function setupSmoothDragToClose(modalElement, headerElement) {
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+            let velocity = 0;
+            let lastY = 0;
+            let lastTime = 0;
+            let animationFrameId = null;
+
+            headerElement.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                lastY = startY;
+                lastTime = Date.now();
+                isDragging = true;
+                
+                modalElement.style.transition = 'none'; 
+                modalElement.style.willChange = 'transform';
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            }, { passive: true });
+
+            headerElement.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                
+                const now = Date.now();
+                const timeDelta = now - lastTime;
+                if (timeDelta > 0) {
+                    velocity = (currentY - lastY) / timeDelta;
+                }
+                lastY = currentY;
+                lastTime = now;
+                
+                if (deltaY > 0) {
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    animationFrameId = requestAnimationFrame(() => {
+                        modalElement.style.transform = `translateY(${deltaY}px)`;
+                    });
+                    if(e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+
+            const handleEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                
+                modalElement.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.2, 1)';
+                modalElement.style.willChange = 'auto';
+
+                const deltaY = currentY - startY;
+                if (deltaY > 100 || velocity > 0.6) {
+                    closeAllModals();
+                } else {
+                    modalElement.style.transform = '';
+                }
+                velocity = 0;
+            };
+
+            headerElement.addEventListener('touchend', handleEnd);
+            headerElement.addEventListener('touchcancel', handleEnd);
+        }
+
+        setupSmoothDragToClose(formModal, document.getElementById('formModalHeader'));
+        setupSmoothDragToClose(detailModal, document.getElementById('detailModalHeader'));
+
         renderApp();
-      });
-
-      // Setup Form Submit
-      els.formSetup.addEventListener('submit', (e) => {
-        e.preventDefault();
-        state.tripData.title = els.setupTitle.value;
-        state.tripData.startDate = els.setupStartDate.value;
-        state.tripData.days = parseInt(els.setupDays.value) || 1;
-        state.tripData.accommodation = els.setupAcc.value;
-        state.activeTab = 'itinerary';
-        saveData();
-        renderApp();
-      });
-
-      // Main FABs
-      document.getElementById('btn-add-location').addEventListener('click', () => openFormModal('location'));
-      document.getElementById('btn-add-transport').addEventListener('click', () => openFormModal('transport'));
-
-      // Modals Close
-      document.querySelectorAll('.btn-close-modal').forEach(btn => {
-        btn.addEventListener('click', closeAllModals);
-      });
-
-      // Form Inputs tracking
-      [els.inputTime, els.inputName, els.inputSubtitle, els.inputDuration, els.inputExtra, els.inputCost].forEach(input => {
-        input.addEventListener('input', handleFormInputs);
-      });
-
-      els.btnSaveItem.addEventListener('click', saveItem);
-
-      // Options Modal Actions
-      document.getElementById('btn-option-edit').addEventListener('click', () => {
-        closeAllModals();
-        setTimeout(() => {
-          const item = state.tripData.itinerary[state.activeDay].find(i => i.id === state.editingId);
-          if (item) openFormModal(item.type, item.id);
-        }, 300); // Wait for transition
-      });
-
-      document.getElementById('btn-option-delete').addEventListener('click', () => {
-        closeAllModals();
-        setTimeout(() => showModal('delete'), 300);
-      });
-
-      document.getElementById('btn-confirm-delete').addEventListener('click', deleteItem);
-    }
-
-    // Boot App
-    init();
-
-  </script>
+    </script>
 </body>
 </html>
